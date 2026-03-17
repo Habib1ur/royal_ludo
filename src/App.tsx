@@ -139,6 +139,16 @@ function App() {
     setDiceDragOffset({ x: 0, y: 0 });
   }, [currentPlayer?.color, isFullscreen]);
 
+  useEffect(() => {
+    if (!isFullscreen || phase !== 'playing') {
+      return;
+    }
+
+    if (!diceRolling && diceValue === null) {
+      setDiceDragOffset({ x: 0, y: 0 });
+    }
+  }, [diceRolling, diceValue, isFullscreen, phase, currentTurnIndex]);
+
   const toggleFullscreen = async () => {
     if (!boardViewportRef.current) return;
     if (document.fullscreenElement === boardViewportRef.current) {
@@ -147,6 +157,22 @@ function App() {
     }
     await boardViewportRef.current.requestFullscreen();
   };
+
+  const fullscreenDiceAnchor = (() => {
+    const dieSize = isMobileViewport ? 64 : 80;
+    switch (currentPlayer?.color) {
+      case 'red':
+        return { left: `calc(20% - ${dieSize / 2}px)`, top: `calc(20% - ${dieSize / 2}px)` };
+      case 'green':
+        return { left: `calc(80% - ${dieSize / 2}px)`, top: `calc(20% - ${dieSize / 2}px)` };
+      case 'yellow':
+        return { left: `calc(80% - ${dieSize / 2}px)`, top: `calc(80% - ${dieSize / 2}px)` };
+      case 'blue':
+        return { left: `calc(20% - ${dieSize / 2}px)`, top: `calc(80% - ${dieSize / 2}px)` };
+      default:
+        return { left: `calc(20% - ${dieSize / 2}px)`, top: `calc(20% - ${dieSize / 2}px)` };
+    }
+  })();
 
   const clampDiceOffset = (offset: { x: number; y: number }) => {
     const boardEl = boardViewportRef.current;
@@ -157,29 +183,20 @@ function App() {
     const rect = boardEl.getBoundingClientRect();
     const dieSize = isMobileViewport ? 64 : 80;
     const padding = 16;
-    const maxX = Math.max(0, rect.width / 2 - dieSize / 2 - padding);
-    const maxY = Math.max(0, rect.height / 2 - dieSize / 2 - padding);
+    const anchorPercentX = currentPlayer?.color === 'green' || currentPlayer?.color === 'yellow' ? 0.8 : 0.2;
+    const anchorPercentY = currentPlayer?.color === 'yellow' || currentPlayer?.color === 'blue' ? 0.8 : 0.2;
+    const anchorX = anchorPercentX * rect.width;
+    const anchorY = anchorPercentY * rect.height;
+    const minX = padding + dieSize / 2 - anchorX;
+    const maxX = rect.width - padding - dieSize / 2 - anchorX;
+    const minY = padding + dieSize / 2 - anchorY;
+    const maxY = rect.height - padding - dieSize / 2 - anchorY;
 
     return {
-      x: Math.max(-maxX, Math.min(maxX, offset.x)),
-      y: Math.max(-maxY, Math.min(maxY, offset.y)),
+      x: Math.max(minX, Math.min(maxX, offset.x)),
+      y: Math.max(minY, Math.min(maxY, offset.y)),
     };
   };
-
-  const fullscreenDicePosition = (() => {
-    switch (currentPlayer?.color) {
-      case 'red':
-        return 'left-[13%] top-[13%]';
-      case 'green':
-        return 'right-[13%] top-[13%]';
-      case 'yellow':
-        return 'right-[13%] bottom-[13%]';
-      case 'blue':
-        return 'left-[13%] bottom-[13%]';
-      default:
-        return 'left-[13%] top-[13%]';
-    }
-  })();
 
   const pickAiMove = useMemo(() => {
     return (candidateIds: string[], dieValue: number | null) => {
@@ -388,7 +405,7 @@ function App() {
               </button>
 
               {isFullscreen ? (
-                <div className={`absolute z-50 ${fullscreenDicePosition}`}>
+                <div className="absolute z-50" style={{ left: fullscreenDiceAnchor.left, top: fullscreenDiceAnchor.top }}>
                   <Dice
                     value={diceValue}
                     rolling={diceRolling}
@@ -397,6 +414,7 @@ function App() {
                     fullscreen
                     minimalFullscreen
                     draggableFullscreen={currentPlayer?.kind !== 'ai'}
+                    mobileViewport={isMobileViewport}
                     dragOffset={diceDragOffset}
                     onFullscreenDragMove={(offset: { x: number; y: number }) =>
                       setDiceDragOffset(clampDiceOffset(offset))

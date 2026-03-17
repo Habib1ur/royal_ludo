@@ -9,6 +9,7 @@ type DiceProps = {
   fullscreen?: boolean;
   minimalFullscreen?: boolean;
   draggableFullscreen?: boolean;
+  mobileViewport?: boolean;
   dragOffset?: { x: number; y: number };
   onFullscreenDragMove?: (offset: { x: number; y: number }) => void;
   onRoll: () => void;
@@ -24,12 +25,30 @@ const pipMap: Record<number, [number, number][]> = {
   6: [[1, 1], [2, 1], [3, 1], [1, 3], [2, 3], [3, 3]],
 };
 
+
+const clampFullscreenOffset = (offset: { x: number; y: number }, mobileViewport?: boolean) => {
+  if (typeof window === 'undefined') {
+    return offset;
+  }
+
+  const dieSize = mobileViewport ? 64 : 80;
+  const padding = 16;
+  const maxX = Math.max(0, window.innerWidth / 2 - dieSize / 2 - padding);
+  const maxY = Math.max(0, window.innerHeight / 2 - dieSize / 2 - padding);
+
+  return {
+    x: Math.max(-maxX, Math.min(maxX, offset.x)),
+    y: Math.max(-maxY, Math.min(maxY, offset.y)),
+  };
+};
+
 function FullscreenManualDice({
   selectedManual,
   displayValue,
   rolling,
   disabled,
   draggableFullscreen,
+  mobileViewport,
   dragOffset,
   onFullscreenDragMove,
   onManualSubmit,
@@ -39,14 +58,13 @@ function FullscreenManualDice({
   rolling: boolean;
   disabled: boolean;
   draggableFullscreen: boolean;
+  mobileViewport?: boolean;
   dragOffset: { x: number; y: number };
   onFullscreenDragMove?: (offset: { x: number; y: number }) => void;
   onManualSubmit: (value: number) => void;
 }) {
   const [manualPickerOpen, setManualPickerOpen] = useState(false);
   const [liveOffset, setLiveOffset] = useState(dragOffset);
-  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
-  const movedRef = useRef(false);
 
   useEffect(() => {
     setLiveOffset(dragOffset);
@@ -60,68 +78,50 @@ function FullscreenManualDice({
 
   return (
     <>
-      <motion.button
-        type="button"
+      <motion.div
         drag={draggableFullscreen && !manualPickerOpen}
         dragMomentum={false}
-        dragElastic={0.08}
-        whileTap={{ scale: manualPickerOpen ? 1 : 0.98 }}
-        onPointerDown={(event) => {
-          pointerStartRef.current = { x: event.clientX, y: event.clientY };
-          movedRef.current = false;
-        }}
-        onPointerMove={(event) => {
-          const start = pointerStartRef.current;
-          if (!start) {
-            return;
-          }
-          if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 8) {
-            movedRef.current = true;
-          }
-        }}
-        onPointerUp={(event) => {
-          const start = pointerStartRef.current;
-          pointerStartRef.current = null;
-          if (movedRef.current || manualPickerOpen) {
-            return;
-          }
-          if (!disabled && start && Math.hypot(event.clientX - start.x, event.clientY - start.y) <= 8) {
-            setManualPickerOpen(true);
-          }
-        }}
+        dragElastic={mobileViewport ? 0.04 : 0.08}
         onDrag={(_, info) => {
-          movedRef.current = true;
           if (draggableFullscreen) {
-            setLiveOffset({
+            setLiveOffset(clampFullscreenOffset({
               x: dragOffset.x + info.offset.x,
               y: dragOffset.y + info.offset.y,
-            });
+            }, mobileViewport));
           }
         }}
         onDragEnd={(_, info) => {
-          const nextOffset = {
+          const nextOffset = clampFullscreenOffset({
             x: dragOffset.x + info.offset.x,
             y: dragOffset.y + info.offset.y,
-          };
+          }, mobileViewport);
           setLiveOffset(nextOffset);
           onFullscreenDragMove?.(nextOffset);
-          window.setTimeout(() => {
-            movedRef.current = false;
-          }, 0);
         }}
         style={draggableFullscreen ? { x: liveOffset.x, y: liveOffset.y, touchAction: 'none' } : undefined}
-        aria-disabled={disabled}
-        className={`relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-2.5 shadow-xl sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3 ${draggableFullscreen ? 'cursor-grab active:cursor-grabbing touch-none' : ''} ${disabled ? 'opacity-80' : ''}`}
-        aria-label="Choose manual dice value"
+        className={draggableFullscreen ? 'cursor-grab active:cursor-grabbing touch-none' : ''}
       >
-        {pipMap[rolling ? displayValue : selectedManual].map(([row, col], index) => (
-          <span
-            key={`${row}-${col}-${index}`}
-            className="m-auto h-2.5 w-2.5 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] sm:h-3 sm:w-3"
-            style={{ gridRow: row, gridColumn: col }}
-          />
-        ))}
-      </motion.button>
+        <motion.button
+          type="button"
+          whileTap={{ scale: manualPickerOpen ? 1 : 0.98 }}
+          onClick={() => {
+            if (!disabled && !manualPickerOpen) {
+              setManualPickerOpen(true);
+            }
+          }}
+          aria-disabled={disabled}
+          className={`relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-2.5 shadow-xl sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3 ${disabled ? 'opacity-80' : ''}`}
+          aria-label="Choose manual dice value"
+        >
+          {pipMap[rolling ? displayValue : selectedManual].map(([row, col], index) => (
+            <span
+              key={`${row}-${col}-${index}`}
+              className="m-auto h-2.5 w-2.5 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] sm:h-3 sm:w-3"
+              style={{ gridRow: row, gridColumn: col }}
+            />
+          ))}
+        </motion.button>
+      </motion.div>
 
       {manualPickerOpen ? (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
@@ -160,6 +160,7 @@ export function Dice({
   fullscreen = false,
   minimalFullscreen = false,
   draggableFullscreen = false,
+  mobileViewport = false,
   dragOffset = { x: 0, y: 0 },
   onFullscreenDragMove,
   onRoll,
@@ -265,6 +266,7 @@ export function Dice({
         rolling={rolling}
         disabled={disabled}
         draggableFullscreen={draggableFullscreen}
+        mobileViewport={mobileViewport}
         dragOffset={dragOffset}
         onFullscreenDragMove={onFullscreenDragMove}
         onManualSubmit={(manualValue) => {
