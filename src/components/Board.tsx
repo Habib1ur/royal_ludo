@@ -20,6 +20,7 @@ type BoardProps = {
   tokens: Token[];
   playersEnabled: Record<PlayerColor, boolean>;
   selectableTokenIds: string[];
+  activePlayerColor?: PlayerColor;
   onTokenSelect: (tokenId: string) => void;
   onStepSound?: () => void;
   compactMode?: boolean;
@@ -302,7 +303,7 @@ const PawnToken = memo(function PawnToken({
   );
 });
 
-export function Board({ tokens, playersEnabled, selectableTokenIds, onTokenSelect, onStepSound, compactMode = false, lowPerformanceMode = false }: BoardProps) {
+export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayerColor, onTokenSelect, onStepSound, compactMode = false, lowPerformanceMode = false }: BoardProps) {
   const visibleTokens = useMemo(() => tokens.filter((token) => playersEnabled[token.owner]), [tokens, playersEnabled]);
   const tokenOffsets = compactMode ? tokenOffsetsCompact : tokenOffsetsRegular;
 
@@ -358,40 +359,56 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, onTokenSelec
           const bounds = YARD_BOUNDS[player];
           const meta = PLAYER_META[player];
           const slots = compactMode ? COMPACT_HOME_SLOTS[player] : HOME_SLOTS[player];
+          const isEnabled = playersEnabled[player];
+          const isActiveYard = activePlayerColor === player;
           return (
             <div
               key={`${player}-home-panel`}
-              className="pointer-events-none absolute z-0 overflow-hidden rounded-[1.35rem] border-2"
+              className="pointer-events-none absolute z-0 overflow-hidden rounded-[1.45rem] border-2 transition-all duration-300"
               style={{
                 left: `${bounds.colStart * CELL_PERCENT + HOME_PANEL_INSET}%`,
                 top: `${bounds.rowStart * CELL_PERCENT + HOME_PANEL_INSET}%`,
                 width: `${HOME_PANEL_SIZE}%`,
                 height: `${HOME_PANEL_SIZE}%`,
-                background: `linear-gradient(145deg, ${meta.soft}, ${meta.color})`,
-                borderColor: 'rgba(255,255,255,0.88)',
-                boxShadow: `inset 0 0 0 1px rgba(255,255,255,0.18), inset 0 10px 18px rgba(255,255,255,0.14), 0 8px 18px rgba(15,23,42,0.06)`,
-                opacity: playersEnabled[player] ? 1 : 0.45,
+                background: `linear-gradient(150deg, ${meta.soft}, ${meta.color})`,
+                borderColor: isActiveYard ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.88)',
+                boxShadow: isActiveYard
+                  ? `inset 0 0 0 1px rgba(255,255,255,0.28), inset 0 16px 28px rgba(255,255,255,0.2), 0 0 0 4px rgba(255,255,255,0.2), 0 0 24px ${meta.tokenShadow}, 0 0 48px ${meta.tokenShadow}`
+                  : `inset 0 0 0 1px rgba(255,255,255,0.18), inset 0 10px 18px rgba(255,255,255,0.12), 0 8px 18px rgba(15,23,42,0.06)`,
+                opacity: isEnabled ? 1 : 0.45,
+                filter: isActiveYard ? 'brightness(1.1) saturate(1.08)' : 'brightness(0.94)',
               }}
             >
-              <div className="absolute inset-[2.5%] rounded-[1.15rem] border border-white/28" />
-              <div className="absolute left-1/2 top-0 h-full w-[3px] -translate-x-1/2 bg-white/65" />
-              <div className="absolute left-0 top-1/2 h-[3px] w-full -translate-y-1/2 bg-white/65" />
-              <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
+              {isActiveYard ? (
+                <>
+                  <div className="absolute inset-[1.5%] rounded-[1.3rem] border-2 border-white/65 shadow-[0_0_18px_rgba(255,255,255,0.32)]" />
+                  <div className="absolute left-1/2 top-[4%] z-[2] -translate-x-1/2 rounded-full border border-white/70 bg-white/90 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.28em] text-slate-900 shadow-[0_8px_20px_rgba(15,23,42,0.2)]">
+                    Active
+                  </div>
+                </>
+              ) : null}
+              <div className="absolute inset-[3%] rounded-[1.2rem] border border-white/30 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
+              <div className="absolute left-1/2 top-[5%] h-[90%] w-[4px] -translate-x-1/2 rounded-full bg-white/55 shadow-[0_0_10px_rgba(255,255,255,0.18)]" />
+              <div className="absolute left-[5%] top-1/2 h-[4px] w-[90%] -translate-y-1/2 rounded-full bg-white/55 shadow-[0_0_10px_rgba(255,255,255,0.18)]" />
+              <div className="absolute inset-[6%] grid grid-cols-2 grid-rows-2 gap-[6%]">
                 {slots.map((_, index) => (
-                  <div key={`${player}-slot-${index}`} className="relative">
-                    <div className="absolute inset-[8%] rounded-[0.95rem] bg-white/8" />
-                    <div className="absolute inset-[11%] rounded-[0.9rem] border border-white/30 bg-white/12" />
+                  <div key={`${player}-slot-${index}`} className="relative overflow-hidden rounded-[1rem] border border-white/26 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.06))] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+                    <div className="absolute inset-[10%] rounded-[0.8rem] bg-black/5" />
+                    <div className="absolute inset-[16%] rounded-[0.75rem] border border-white/20 bg-white/10" />
                     <div
-                      className="absolute inset-[29%] rounded-full border-2"
+                      className="absolute inset-[31%] rounded-full border-2"
                       style={{
-                        borderColor: 'rgba(255,255,255,0.55)',
-                        background: 'rgba(255,255,255,0.14)',
-                        boxShadow: 'inset 0 2px 6px rgba(255,255,255,0.12)',
+                        borderColor: isActiveYard ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.56)',
+                        background: 'rgba(255,255,255,0.18)',
+                        boxShadow: isActiveYard
+                          ? 'inset 0 2px 8px rgba(255,255,255,0.18), 0 0 12px rgba(255,255,255,0.12)'
+                          : 'inset 0 2px 6px rgba(255,255,255,0.12)',
                       }}
                     />
                   </div>
                 ))}
               </div>
+              <div className="absolute left-1/2 top-1/2 h-[13%] w-[13%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/35 bg-white/18 shadow-[inset_0_2px_8px_rgba(255,255,255,0.14)]" />
             </div>
           );
         })}

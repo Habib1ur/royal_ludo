@@ -148,6 +148,24 @@ function App() {
     await boardViewportRef.current.requestFullscreen();
   };
 
+  const clampDiceOffset = (offset: { x: number; y: number }) => {
+    const boardEl = boardViewportRef.current;
+    if (!boardEl) {
+      return offset;
+    }
+
+    const rect = boardEl.getBoundingClientRect();
+    const dieSize = isMobileViewport ? 64 : 80;
+    const padding = 16;
+    const maxX = Math.max(0, rect.width / 2 - dieSize / 2 - padding);
+    const maxY = Math.max(0, rect.height / 2 - dieSize / 2 - padding);
+
+    return {
+      x: Math.max(-maxX, Math.min(maxX, offset.x)),
+      y: Math.max(-maxY, Math.min(maxY, offset.y)),
+    };
+  };
+
   const fullscreenDicePosition = (() => {
     switch (currentPlayer?.color) {
       case 'red':
@@ -297,7 +315,7 @@ function App() {
 
   return (
     <div
-      className={`min-h-screen overflow-hidden transition-colors ${
+      className={`${options.performanceMode && isMobileViewport ? 'mobile-performance ' : ''}min-h-screen overflow-hidden transition-colors ${
         theme === 'dark'
           ? 'bg-[radial-gradient(circle_at_top,#17326f_0%,#08101d_40%,#030712_100%)] text-white'
           : 'bg-[radial-gradient(circle_at_top,#f8fbff_0%,#dbeafe_38%,#eff6ff_100%)] text-slate-950'
@@ -354,7 +372,7 @@ function App() {
             <div ref={boardViewportRef} className={`relative min-h-0 rounded-[1.6rem] border border-white/15 bg-white/8 p-2 shadow-glass ${options.performanceMode && !isFullscreen ? '' : 'backdrop-blur-xl'} sm:rounded-[2.2rem] sm:p-3 ${isFullscreen ? 'h-screen w-screen overflow-hidden rounded-none border-0 bg-[radial-gradient(circle_at_top,#17326f_0%,#08101d_46%,#030712_100%)] p-2 sm:p-3' : ''}`}>
               <div className={`mx-auto h-full overflow-auto ${isFullscreen ? 'w-full max-w-none touch-pan-x touch-pan-y' : 'min-h-[22rem] w-full max-w-[min(98vw,1120px)] sm:min-h-[26rem] xl:max-h-[calc(100vh-11rem)]'}`}>
                 <div className="flex h-full min-w-max items-center justify-center transition-transform duration-200" style={{ transform: `scale(${boardScale})`, transformOrigin: 'center center' }}>
-                  <Board tokens={tokens} playersEnabled={playersEnabledMap} selectableTokenIds={options.showHints ? selectableTokenIds : []} onTokenSelect={handleMoveToken} onStepSound={sounds.playStep} compactMode={!isFullscreen} lowPerformanceMode={options.performanceMode} />
+                  <Board tokens={tokens} playersEnabled={playersEnabledMap} selectableTokenIds={options.showHints ? selectableTokenIds : []} activePlayerColor={currentPlayer?.color} onTokenSelect={handleMoveToken} onStepSound={sounds.playStep} compactMode={!isFullscreen} lowPerformanceMode={options.performanceMode} />
                 </div>
               </div>
 
@@ -381,7 +399,7 @@ function App() {
                     draggableFullscreen={currentPlayer?.kind !== 'ai'}
                     dragOffset={diceDragOffset}
                     onFullscreenDragMove={(offset: { x: number; y: number }) =>
-                      setDiceDragOffset(offset)
+                      setDiceDragOffset(clampDiceOffset(offset))
                     }
                     onRoll={handleRoll}
                     onManualSubmit={useManualDice}
