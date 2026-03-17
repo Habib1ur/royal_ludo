@@ -1,4 +1,4 @@
-import { Crown, Expand, History, Minimize, Plus, RotateCcw, ScrollText, Search, Sparkles, Undo2 } from 'lucide-react';
+import { Crown, Expand, History, Minimize, RotateCcw, ScrollText, Sparkles, Undo2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Board } from './components/Board';
 import { ControlPanel } from './components/ControlPanel';
@@ -61,6 +61,9 @@ function App() {
   const sounds = useSoundHooks(options.soundsEnabled);
   const boardViewportRef = useRef<HTMLDivElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false,
+  );
   const [boardScale, setBoardScale] = useState(1);
   const [timerRemaining, setTimerRemaining] = useState<number>(options.turnTimerSeconds);
   const enabledPlayers = players.filter((player) => player.enabled);
@@ -69,6 +72,25 @@ function App() {
     typeof players[number]['color'],
     boolean
   >;
+
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const handleChange = (event: MediaQueryListEvent) => setIsMobileViewport(event.matches);
+    setIsMobileViewport(mediaQuery.matches);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
+  }, []);
 
   useEffect(() => {
     const handleFullscreen = async () => {
@@ -323,18 +345,6 @@ function App() {
 
           <section className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-2 sm:gap-3">
             <div ref={boardViewportRef} className={`relative min-h-0 rounded-[1.6rem] border border-white/15 bg-white/8 p-2 shadow-glass backdrop-blur-xl sm:rounded-[2.2rem] sm:p-3 ${isFullscreen ? 'h-screen w-screen overflow-hidden rounded-none border-0 bg-[radial-gradient(circle_at_top,#17326f_0%,#08101d_46%,#030712_100%)] p-2 sm:p-3' : ''}`}>
-              <div className="absolute bottom-3 left-3 z-40 flex items-center gap-2 rounded-full border border-white/25 bg-slate-950/75 p-2 text-white shadow-[0_10px_24px_rgba(15,23,42,0.28)] backdrop-blur-sm sm:bottom-4 sm:left-4">
-                <button type="button" onClick={() => setBoardScale((value) => Math.max(0.85, Number((value - 0.1).toFixed(2))))} className="rounded-full bg-white/10 p-2 transition hover:bg-white/20" aria-label="Zoom out">
-                  <Minimize className="h-4 w-4" />
-                </button>
-                <button type="button" onClick={() => setBoardScale(1)} className="rounded-full bg-white/10 p-2 text-xs font-semibold transition hover:bg-white/20" aria-label="Reset zoom">
-                  <Search className="h-4 w-4" />
-                </button>
-                <button type="button" onClick={() => setBoardScale((value) => Math.min(1.6, Number((value + 0.1).toFixed(2))))} className="rounded-full bg-white/10 p-2 transition hover:bg-white/20" aria-label="Zoom in">
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-
               <div className={`mx-auto h-full overflow-auto ${isFullscreen ? 'w-full max-w-none touch-pan-x touch-pan-y' : 'min-h-[22rem] w-full max-w-[min(98vw,1120px)] sm:min-h-[26rem] xl:max-h-[calc(100vh-11rem)]'}`}>
                 <div className="flex h-full min-w-max items-center justify-center transition-transform duration-200" style={{ transform: `scale(${boardScale})`, transformOrigin: 'center center' }}>
                   <Board tokens={tokens} playersEnabled={playersEnabledMap} selectableTokenIds={options.showHints ? selectableTokenIds : []} onTokenSelect={handleMoveToken} onStepSound={sounds.playStep} compactMode={!isFullscreen} />
@@ -353,8 +363,14 @@ function App() {
               </button>
 
               {isFullscreen ? (
-                <div className={`absolute z-30 ${fullscreenDicePosition} w-[clamp(12.5rem,18vw,14rem)]`}>
-                  <Dice value={diceValue} rolling={diceRolling} disabled={diceRolling || diceValue !== null || phase === 'finished' || currentPlayer?.kind === 'ai'} manualMode={options.manualDiceInput && currentPlayer?.kind !== 'ai'} fullscreen onRoll={handleRoll} onManualSubmit={useManualDice} />
+                <div
+                  className={`absolute z-30 ${fullscreenDicePosition} ${
+                    isMobileViewport && !(options.manualDiceInput && currentPlayer?.kind !== 'ai')
+                      ? ''
+                      : 'w-[clamp(12.5rem,18vw,14rem)]'
+                  }`}
+                >
+                  <Dice value={diceValue} rolling={diceRolling} disabled={diceRolling || diceValue !== null || phase === 'finished' || currentPlayer?.kind === 'ai'} manualMode={options.manualDiceInput && currentPlayer?.kind !== 'ai'} fullscreen minimalFullscreen={isMobileViewport && !(options.manualDiceInput && currentPlayer?.kind !== 'ai')} onRoll={handleRoll} onManualSubmit={useManualDice} />
                 </div>
               ) : null}
             </div>

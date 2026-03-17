@@ -7,6 +7,7 @@ type DiceProps = {
   disabled: boolean;
   manualMode: boolean;
   fullscreen?: boolean;
+  minimalFullscreen?: boolean;
   onRoll: () => void;
   onManualSubmit: (value: number) => void;
 };
@@ -20,7 +21,7 @@ const pipMap: Record<number, [number, number][]> = {
   6: [[1, 1], [2, 1], [3, 1], [1, 3], [2, 3], [3, 3]],
 };
 
-export function Dice({ value, rolling, disabled, manualMode, fullscreen = false, onRoll, onManualSubmit }: DiceProps) {
+export function Dice({ value, rolling, disabled, manualMode, fullscreen = false, minimalFullscreen = false, onRoll, onManualSubmit }: DiceProps) {
   const [displayValue, setDisplayValue] = useState(value ?? 1);
   const [selectedManual, setSelectedManual] = useState<number>(1);
 
@@ -51,6 +52,27 @@ export function Dice({ value, rolling, disabled, manualMode, fullscreen = false,
   const pipClass = fullscreen
     ? 'm-auto h-2.5 w-2.5 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)]'
     : 'm-auto h-3 w-3 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] sm:h-3.5 sm:w-3.5';
+
+
+  if (fullscreen && minimalFullscreen && !manualMode) {
+    return (
+      <motion.button
+        type="button"
+        whileHover={{ scale: disabled ? 1 : 1.03 }}
+        whileTap={{ scale: disabled ? 1 : 0.98 }}
+        animate={rolling ? { rotate: [0, 90, 180, 270, 360], scale: [1, 1.08, 0.95, 1.02, 1] } : { rotate: 0, scale: 1 }}
+        transition={{ duration: 0.9, ease: 'easeInOut' }}
+        onClick={onRoll}
+        disabled={disabled}
+        className={`${standardDie} disabled:cursor-not-allowed disabled:opacity-80`}
+        aria-label="Roll dice"
+      >
+        {pipMap[displayValue].map(([row, col], index) => (
+          <span key={`${row}-${col}-${index}`} className={pipClass} style={{ gridRow: row, gridColumn: col }} />
+        ))}
+      </motion.button>
+    );
+  }
 
   if (manualMode) {
     return (
