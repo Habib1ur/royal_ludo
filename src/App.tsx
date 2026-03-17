@@ -64,6 +64,7 @@ function App() {
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false,
   );
+  const [diceDragOffset, setDiceDragOffset] = useState({ x: 0, y: 0 });
   const [boardScale, setBoardScale] = useState(1);
   const [timerRemaining, setTimerRemaining] = useState<number>(options.turnTimerSeconds);
   const enabledPlayers = players.filter((player) => player.enabled);
@@ -133,6 +134,11 @@ function App() {
     }
   }, [winner]);
 
+
+  useEffect(() => {
+    setDiceDragOffset({ x: 0, y: 0 });
+  }, [currentPlayer?.color, isFullscreen]);
+
   const toggleFullscreen = async () => {
     if (!boardViewportRef.current) return;
     if (document.fullscreenElement === boardViewportRef.current) {
@@ -145,15 +151,15 @@ function App() {
   const fullscreenDicePosition = (() => {
     switch (currentPlayer?.color) {
       case 'red':
-        return 'right-[2.25%] bottom-[8%]';
+        return 'left-[13%] top-[13%]';
       case 'green':
-        return 'left-[2.25%] bottom-[8%]';
+        return 'right-[13%] top-[13%]';
       case 'yellow':
-        return 'left-[2.25%] top-[12%]';
+        return 'right-[13%] bottom-[13%]';
       case 'blue':
-        return 'right-[2.25%] top-[12%]';
+        return 'left-[13%] bottom-[13%]';
       default:
-        return 'right-[2.25%] bottom-[8%]';
+        return 'left-[13%] top-[13%]';
     }
   })();
 
@@ -364,8 +370,22 @@ function App() {
               </button>
 
               {isFullscreen ? (
-                <div className={`absolute z-30 ${fullscreenDicePosition}`}>
-                  <Dice value={diceValue} rolling={diceRolling} disabled={diceRolling || diceValue !== null || phase === 'finished' || currentPlayer?.kind === 'ai'} manualMode={options.manualDiceInput && currentPlayer?.kind !== 'ai'} fullscreen minimalFullscreen onRoll={handleRoll} onManualSubmit={useManualDice} />
+                <div className={`absolute z-50 ${fullscreenDicePosition}`}>
+                  <Dice
+                    value={diceValue}
+                    rolling={diceRolling}
+                    disabled={diceRolling || diceValue !== null || phase === 'finished' || currentPlayer?.kind === 'ai'}
+                    manualMode={options.manualDiceInput && currentPlayer?.kind !== 'ai'}
+                    fullscreen
+                    minimalFullscreen
+                    draggableFullscreen={currentPlayer?.kind !== 'ai'}
+                    dragOffset={diceDragOffset}
+                    onFullscreenDragMove={(offset: { x: number; y: number }) =>
+                      setDiceDragOffset(offset)
+                    }
+                    onRoll={handleRoll}
+                    onManualSubmit={useManualDice}
+                  />
                 </div>
               ) : null}
             </div>

@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion';
+import { memo, useEffect, useMemo, useRef } from 'react';
+import { motion, useAnimationControls } from 'framer-motion';
 import type { CSSProperties } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BOARD_SIZE,
   FINAL_PROGRESS,
@@ -14,7 +14,6 @@ import {
 } from '../constants/board';
 import { PLAYER_META, PLAYER_ORDER } from '../constants/players';
 import { BoardCoordinate, PlayerColor, Token } from '../types/game';
-import { delay } from '../utils/helpers';
 import { getHomeSlotIndex, getTokenCoordinate, getTokenPathCoordinate } from '../utils/board';
 
 type BoardProps = {
@@ -45,12 +44,16 @@ type PawnVars = CSSProperties & {
   '--pawn-accent': string;
 };
 
+type RenderToken = {
+  token: Token;
+  coord: BoardCoordinate;
+  offset: { x: number; y: number };
+};
+
 const FINISH_COORD: BoardCoordinate = { row: 7, col: 7 };
 const CELL_PERCENT = 100 / BOARD_SIZE;
 const SLOT_INSET = CELL_PERCENT * 0.18;
 const SLOT_SIZE = CELL_PERCENT * 0.64;
-const YARD_INSET = CELL_PERCENT * 0.12;
-const YARD_SIZE = CELL_PERCENT * 5.76;
 const HOME_PANEL_INSET = CELL_PERCENT * 0.08;
 const HOME_PANEL_SIZE = CELL_PERCENT * 5.84;
 const coordKey = (coord: BoardCoordinate) => `${coord.row}-${coord.col}`;
@@ -149,6 +152,11 @@ const getDisplayCoordinate = (token: Token, compactMode: boolean) => {
   return getTokenCoordinate(token, homeSlotIndex) ?? FINISH_COORD;
 };
 
+const getPositionStyle = (coord: BoardCoordinate) => ({
+  left: `${((coord.col + 0.5) / BOARD_SIZE) * 100}%`,
+  top: `${((coord.row + 0.5) / BOARD_SIZE) * 100}%`,
+});
+
 const buildSequence = (previous: Token | undefined, next: Token, compactMode: boolean): BoardCoordinate[] => {
   const homeSlotIndex = getHomeSlotIndex(next.id);
   const homeCoord = compactMode ? COMPACT_HOME_SLOTS[next.owner][homeSlotIndex] : HOME_SLOTS[next.owner][homeSlotIndex];
@@ -156,7 +164,13 @@ const buildSequence = (previous: Token | undefined, next: Token, compactMode: bo
   if (previous.state === 'home' && next.state === 'active' && next.progress === 0) {
     return [homeCoord, getTokenPathCoordinate(next, 0)];
   }
-  if (previous.state !== 'home' && previous.progress !== null && next.state !== 'home' && next.progress !== null && next.progress >= previous.progress) {
+  if (
+    previous.state !== 'home' &&
+    previous.progress !== null &&
+    next.state !== 'home' &&
+    next.progress !== null &&
+    next.progress >= previous.progress
+  ) {
     const steps: BoardCoordinate[] = [];
     for (let progress = previous.progress + 1; progress <= next.progress; progress += 1) {
       steps.push(progress === FINAL_PROGRESS ? FINISH_COORD : getTokenPathCoordinate(next, progress));
@@ -177,73 +191,134 @@ const buildSequence = (previous: Token | undefined, next: Token, compactMode: bo
   return [getDisplayCoordinate(next, compactMode)];
 };
 
-export function Board({ tokens, playersEnabled, selectableTokenIds, onTokenSelect, onStepSound, compactMode = false, lowPerformanceMode = false }: BoardProps) {
-  const tokenOffsets = compactMode ? tokenOffsetsCompact : tokenOffsetsRegular;
-  const [displayCoords, setDisplayCoords] = useState<Record<string, BoardCoordinate>>(() =>
-    Object.fromEntries(tokens.map((token) => [token.id, getDisplayCoordinate(token, compactMode)])),
-  );
-  const [stepPulses, setStepPulses] = useState<Record<string, number>>(() =>
-    Object.fromEntries(tokens.map((token) => [token.id, 0])),
-  );
-  const previousTokensRef = useRef<Record<string, Token>>(Object.fromEntries(tokens.map((token) => [token.id, token])));
-  const animationRunRef = useRef(0);
+const PawnToken = memo(function PawnToken({
+  token,
+  targetCoord,
+  offset,
+  selectable,
+  compactMode,
+  lowPerformanceMode,
+  onTokenSelect,
+  onStepSound,
+}: {
+  token: Token;
+  targetCoord: BoardCoordinate;
+  offset: { x: number; y: number };
+  selectable: boolean;
+  compactMode: boolean;
+  lowPerformanceMode: boolean;
+  onTokenSelect: (tokenId: string) => void;
+  onStepSound?: () => void;
+}) {
+  const metaForToken = PLAYER_META[token.owner];
+  const pawnStyle: PawnVars = {
+    '--pawn-start': '#ffffff',
+    '--pawn-mid': metaForToken.soft,
+    '--pawn-end': metaForToken.color,
+    '--pawn-accent': metaForToken.accent,
+  };
+  const selectLift = lowPerformanceMode ? (compactMode ? 2 : 3) : compactMode ? 6 : 10;
+  const controls = useAnimationControls();
+  const previousTokenRef = useRef<Token | undefined>(undefined);
+  const currentCoordRef = useRef<BoardCoordinate>(targetCoord);
+  const runIdRef = useRef(0);
 
   useEffect(() => {
-    setDisplayCoords((current) => {
-      const next = { ...current };
-      for (const token of tokens) {
-        if (!next[token.id]) {
-          next[token.id] = getDisplayCoordinate(token, compactMode);
-        }
-      }
-      return next;
-    });
-  }, [tokens, compactMode, onStepSound]);
-
-  useEffect(() => {
-    setDisplayCoords(Object.fromEntries(tokens.map((token) => [token.id, getDisplayCoordinate(token, compactMode)])));
-    setStepPulses(Object.fromEntries(tokens.map((token) => [token.id, 0])));
-    previousTokensRef.current = Object.fromEntries(tokens.map((token) => [token.id, token]));
+    controls.set(getPositionStyle(targetCoord));
+    currentCoordRef.current = targetCoord;
+    previousTokenRef.current = token;
   }, [compactMode]);
 
   useEffect(() => {
-    const runId = ++animationRunRef.current;
-    const previousMap = previousTokensRef.current;
+    const previous = previousTokenRef.current;
+    const sameState = previous && previous.state === token.state && previous.progress === token.progress;
+    if (!previous || sameState) {
+      controls.set(getPositionStyle(targetCoord));
+      currentCoordRef.current = targetCoord;
+      previousTokenRef.current = token;
+      return;
+    }
+
+    const runId = ++runIdRef.current;
+    const sequence = buildSequence(previous, token, compactMode);
+    const stepDuration = previous.state === 'active' && token.state === 'home'
+      ? compactMode ? 0.12 : 0.15
+      : compactMode ? 0.4 : 0.48;
+
     const animate = async () => {
-      for (const token of tokens) {
-        const previous = previousMap[token.id];
-        const shouldAnimate = previous && (previous.state !== token.state || previous.progress !== token.progress);
-        if (!shouldAnimate) continue;
-        const isReverseCapture = previous.state === 'active' && token.state === 'home';
-        const stepDelay = isReverseCapture
-          ? compactMode ? 110 : 150
-          : 600;
-        for (const coord of buildSequence(previous, token, compactMode)) {
-          if (animationRunRef.current !== runId) return;
-          setDisplayCoords((current) => ({ ...current, [token.id]: coord }));
-          setStepPulses((current) => ({ ...current, [token.id]: (current[token.id] ?? 0) + 1 }));
-          onStepSound?.();
-          await delay(stepDelay);
+      for (const coord of sequence) {
+        if (runIdRef.current !== runId) {
+          return;
         }
+        await controls.start({
+          ...getPositionStyle(coord),
+          transition: {
+            left: { duration: stepDuration, ease: 'linear' },
+            top: { duration: stepDuration, ease: 'linear' },
+          },
+        });
+        currentCoordRef.current = coord;
+        onStepSound?.();
       }
-      previousTokensRef.current = Object.fromEntries(tokens.map((token) => [token.id, token]));
+      previousTokenRef.current = token;
     };
+
     void animate();
-  }, [tokens, compactMode, onStepSound]);
+  }, [compactMode, controls, onStepSound, targetCoord, token]);
+
+  return (
+    <motion.div
+      className="absolute z-20"
+      style={{ transform: 'translate(-50%, -50%)' }}
+      initial={false}
+      animate={controls}
+    >
+      <motion.button
+        type="button"
+        aria-label={`Move ${token.owner} pawn`}
+        className={`pawn-piece ${compactMode ? 'pawn-piece-compact' : ''} ${selectable ? 'pawn-piece-active' : ''}`}
+        style={pawnStyle}
+        initial={false}
+        animate={{
+          x: offset.x,
+          y: selectable ? [offset.y, offset.y - selectLift, offset.y] : offset.y,
+          scale: selectable ? [1, 1.04, 1] : 1,
+        }}
+        transition={{
+          x: { duration: 0.08, ease: 'linear' },
+          y: selectable ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.08, ease: 'linear' },
+          scale: selectable ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.08, ease: 'linear' },
+        }}
+        whileHover={lowPerformanceMode ? undefined : { scale: selectable ? 1.06 : 1 }}
+        whileTap={{ scale: selectable ? 0.96 : 1 }}
+        onClick={() => selectable && onTokenSelect(token.id)}
+      >
+        <span className="pawn-cap" />
+        <span className="pawn-neck" />
+        <span className="pawn-base" />
+        <span className="sr-only">{token.owner} pawn</span>
+      </motion.button>
+    </motion.div>
+  );
+});
+
+export function Board({ tokens, playersEnabled, selectableTokenIds, onTokenSelect, onStepSound, compactMode = false, lowPerformanceMode = false }: BoardProps) {
+  const visibleTokens = useMemo(() => tokens.filter((token) => playersEnabled[token.owner]), [tokens, playersEnabled]);
+  const tokenOffsets = compactMode ? tokenOffsetsCompact : tokenOffsetsRegular;
 
   const groupedTokens = useMemo(() => {
     const coordinateToTokens = new Map<string, { coord: BoardCoordinate; tokens: Token[] }>();
-    tokens.forEach((token) => {
-      const coord = displayCoords[token.id] ?? getDisplayCoordinate(token, compactMode);
+    visibleTokens.forEach((token) => {
+      const coord = getDisplayCoordinate(token, compactMode);
       const key = coordKey(coord);
       const existing = coordinateToTokens.get(key) ?? { coord, tokens: [] };
       existing.tokens.push(token);
       coordinateToTokens.set(key, existing);
     });
     return Array.from(coordinateToTokens.values()).flatMap(({ coord, tokens: grouped }) =>
-      grouped.map((token, index) => ({ token, coord, offset: tokenOffsets[index] ?? { x: 0, y: 0 } })),
+      grouped.map((token, index): RenderToken => ({ token, coord, offset: tokenOffsets[index] ?? { x: 0, y: 0 } })),
     );
-  }, [displayCoords, tokens, compactMode, tokenOffsets]);
+  }, [compactMode, tokenOffsets, visibleTokens]);
 
   return (
     <div className={`board-shell h-full w-full overflow-hidden rounded-[2.8rem] border border-white/20 p-3 shadow-board ${compactMode ? 'board-shell-compact' : ''} ${lowPerformanceMode ? 'board-shell-performance' : ''}`}>
@@ -354,86 +429,19 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, onTokenSelec
           ];
         })}
 
-        {groupedTokens.map(({ token, coord, offset }) => {
-          const metaForToken = PLAYER_META[token.owner];
-          const selectable = selectableTokenIds.includes(token.id);
-          const stepPulse = stepPulses[token.id] ?? 0;
-          const pawnStyle: PawnVars = {
-            '--pawn-start': '#ffffff',
-            '--pawn-mid': metaForToken.soft,
-            '--pawn-end': metaForToken.color,
-            '--pawn-accent': metaForToken.accent,
-          };
-          const stepLift = lowPerformanceMode ? (compactMode ? 4 : 6) : compactMode ? 7 : 11;
-          const selectLift = lowPerformanceMode ? (compactMode ? 2 : 3) : compactMode ? 6 : 10;
-          return (
-            <motion.div
-              key={token.id}
-              className="absolute z-20"
-              style={{
-                transform: 'translate(-50%, -50%)',
-              }}
-              initial={false}
-              animate={{
-                left: `${((coord.col + 0.5) / BOARD_SIZE) * 100}%`,
-                top: `${((coord.row + 0.5) / BOARD_SIZE) * 100}%`,
-              }}
-              transition={{
-                left: { duration: compactMode ? 0.18 : 0.24, ease: 'easeOut' },
-                top: { duration: compactMode ? 0.18 : 0.24, ease: 'easeOut' },
-              }}
-            >
-              <motion.button
-                key={`${token.id}-${stepPulse}-${selectable ? 'jump' : 'step'}`}
-                type="button"
-                aria-label={`Move ${token.owner} pawn`}
-                className={`pawn-piece ${compactMode ? 'pawn-piece-compact' : ''} ${selectable ? 'pawn-piece-active' : ''}`}
-                style={pawnStyle}
-                initial={false}
-                animate={
-                  lowPerformanceMode
-                    ? {
-                        x: offset.x,
-                        y: selectable ? offset.y - selectLift : [offset.y, offset.y - stepLift, offset.y],
-                        scale: selectable ? 1.04 : [1, 1.02, 1],
-                      }
-                    : {
-                        x: offset.x,
-                        y: selectable
-                          ? [offset.y, offset.y - selectLift, offset.y]
-                          : [offset.y, offset.y - stepLift, offset.y + (compactMode ? 2 : 3), offset.y],
-                        scale: selectable ? [1, 1.05, 1] : [1, 0.92, 1.04, 1],
-                      }
-                }
-                transition={{
-                  x: { duration: 0.1, ease: 'easeInOut' },
-                  y: lowPerformanceMode
-                    ? selectable
-                      ? { duration: 0.2, ease: 'easeOut' }
-                      : { duration: compactMode ? 0.2 : 0.24, ease: 'easeOut' }
-                    : selectable
-                      ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' }
-                      : { duration: compactMode ? 0.34 : 0.42, ease: 'easeOut' },
-                  scale: lowPerformanceMode
-                    ? selectable
-                      ? { duration: 0.2, ease: 'easeOut' }
-                      : { duration: compactMode ? 0.2 : 0.24, ease: 'easeOut' }
-                    : selectable
-                      ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' }
-                      : { duration: compactMode ? 0.34 : 0.42, ease: 'easeOut' },
-                }}
-                whileHover={lowPerformanceMode ? undefined : { scale: selectable ? 1.1 : 1 }}
-                whileTap={{ scale: selectable ? 0.96 : 1 }}
-                onClick={() => selectable && onTokenSelect(token.id)}
-              >
-                <span className="pawn-cap" />
-                <span className="pawn-neck" />
-                <span className="pawn-base" />
-                <span className="sr-only">{token.owner} pawn</span>
-              </motion.button>
-            </motion.div>
-          );
-        })}
+        {groupedTokens.map(({ token, coord, offset }) => (
+          <PawnToken
+            key={token.id}
+            token={token}
+            targetCoord={coord}
+            offset={offset}
+            selectable={selectableTokenIds.includes(token.id)}
+            compactMode={compactMode}
+            lowPerformanceMode={lowPerformanceMode}
+            onTokenSelect={onTokenSelect}
+            onStepSound={onStepSound}
+          />
+        ))}
       </div>
     </div>
   );
