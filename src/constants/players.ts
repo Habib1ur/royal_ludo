@@ -50,7 +50,7 @@ export const PLAYER_META: Record<
 export const DEFAULT_PLAYERS: PlayerConfig[] = PLAYER_ORDER.map((color, index) => ({
   color,
   name: `Player ${index + 1}`,
-  enabled: index < 2,
+  enabled: color === 'red' || color === 'yellow',
   avatar: PLAYER_META[color].avatar,
   kind: 'human',
 }));

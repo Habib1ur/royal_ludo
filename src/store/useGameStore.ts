@@ -11,6 +11,7 @@ import {
   createUndoSnapshot,
   getCurrentPlayer,
   getNextTurnIndex,
+  isPlayerEnabledForCount,
   isWinningPlayer,
 } from '../utils/game';
 import { createId, delay, rollSecureDie } from '../utils/helpers';
@@ -131,9 +132,9 @@ export const useGameStore = create<GameState & GameActions>()(
           lobby: {
             ...state.lobby,
             playerCount: count,
-            players: state.lobby.players.map((player, index) => ({
+            players: state.lobby.players.map((player) => ({
               ...player,
-              enabled: index < count,
+              enabled: isPlayerEnabledForCount(player.color, count),
             })),
           },
         })),
@@ -161,9 +162,9 @@ export const useGameStore = create<GameState & GameActions>()(
 
       startGame: ({ playerCount, players, options }) =>
         set((state) => {
-          const nextPlayers = players.map((player, index) => ({
+          const nextPlayers = players.map((player) => ({
             ...player,
-            enabled: index < playerCount,
+            enabled: isPlayerEnabledForCount(player.color, playerCount),
           }));
 
           return {

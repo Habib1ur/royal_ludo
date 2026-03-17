@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Bot, Dices, Play, RotateCcw, Settings2, Sparkles, TimerReset, Users, Volume2 } from 'lucide-react';
 import { PLAYER_META, PLAYER_ORDER } from '../constants/players';
 import { GameOptions, PlayerConfig } from '../types/game';
+import { isPlayerEnabledForCount } from '../utils/game';
 
 type StartScreenProps = {
   playerCount: 2 | 3 | 4;
@@ -111,7 +112,7 @@ export function StartScreen({
             {PLAYER_ORDER.map((color, index) => {
               const player = players.find((entry) => entry.color === color)!;
               const meta = PLAYER_META[color];
-              const enabled = index < playerCount;
+              const enabled = isPlayerEnabledForCount(color, playerCount);
 
               return (
                 <div key={color} className={`rounded-[1.5rem] border p-4 transition ${enabled ? 'border-white/15 bg-slate-950/30' : 'border-white/10 bg-slate-950/20 opacity-60'}`}>
@@ -154,7 +155,11 @@ export function StartScreen({
             </button>
             <div className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-slate-200">
               <Sparkles className="h-4 w-4" />
-              {options.manualDiceInput ? 'Offline dice entry enabled' : 'Secure dice randomness enabled'}
+              {playerCount === 2
+                ? 'Two-player mode uses opposite houses: Red and Yellow'
+                : options.manualDiceInput
+                  ? 'Offline dice entry enabled'
+                  : 'Secure dice randomness enabled'}
             </div>
             {canResume ? (
               <button type="button" onClick={onClearSaved} className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-5 py-3 font-semibold text-white transition hover:bg-white/10">

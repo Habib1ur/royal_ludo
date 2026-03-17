@@ -61,9 +61,6 @@ function App() {
   const sounds = useSoundHooks(options.soundsEnabled);
   const boardViewportRef = useRef<HTMLDivElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isMobileViewport, setIsMobileViewport] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false,
-  );
   const [boardScale, setBoardScale] = useState(1);
   const [timerRemaining, setTimerRemaining] = useState<number>(options.turnTimerSeconds);
   const enabledPlayers = players.filter((player) => player.enabled);
@@ -73,24 +70,6 @@ function App() {
     boolean
   >;
 
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia('(max-width: 768px)');
-    const handleChange = (event: MediaQueryListEvent) => setIsMobileViewport(event.matches);
-    setIsMobileViewport(mediaQuery.matches);
-
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-
-    mediaQuery.addListener(handleChange);
-    return () => mediaQuery.removeListener(handleChange);
-  }, []);
 
   useEffect(() => {
     const handleFullscreen = async () => {
@@ -363,10 +342,8 @@ function App() {
               </button>
 
               {isFullscreen ? (
-                <div
-                  className={`absolute z-30 ${fullscreenDicePosition} ${isMobileViewport ? '' : 'w-[clamp(12.5rem,18vw,14rem)]'}`}
-                >
-                  <Dice value={diceValue} rolling={diceRolling} disabled={diceRolling || diceValue !== null || phase === 'finished' || currentPlayer?.kind === 'ai'} manualMode={options.manualDiceInput && currentPlayer?.kind !== 'ai'} fullscreen minimalFullscreen={isMobileViewport} onRoll={handleRoll} onManualSubmit={useManualDice} />
+                <div className={`absolute z-30 ${fullscreenDicePosition}`}>
+                  <Dice value={diceValue} rolling={diceRolling} disabled={diceRolling || diceValue !== null || phase === 'finished' || currentPlayer?.kind === 'ai'} manualMode={options.manualDiceInput && currentPlayer?.kind !== 'ai'} fullscreen minimalFullscreen onRoll={handleRoll} onManualSubmit={useManualDice} />
                 </div>
               ) : null}
             </div>

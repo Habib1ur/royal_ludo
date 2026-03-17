@@ -51,10 +51,10 @@ export function Dice({ value, rolling, disabled, manualMode, fullscreen = false,
     ? 'rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(165deg,rgba(248,250,252,0.97),rgba(226,232,240,0.94)_54%,rgba(203,213,225,0.9)_100%)] p-3 text-slate-950 shadow-[0_16px_30px_rgba(15,23,42,0.22)] backdrop-blur-md'
     : 'rounded-[2rem] border border-amber-200/30 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.94))] p-4 text-white shadow-[0_18px_50px_rgba(15,23,42,0.35)] sm:p-5';
   const standardDie = fullscreen
-    ? 'relative grid h-14 w-14 shrink-0 grid-cols-3 grid-rows-3 rounded-[1rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-2 shadow-xl'
+    ? 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-2.5 shadow-xl sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3'
     : 'relative grid h-20 w-20 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.4rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-3 shadow-2xl sm:h-24 sm:w-24 sm:p-4';
   const pipClass = fullscreen
-    ? 'm-auto h-2.5 w-2.5 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)]'
+    ? 'm-auto h-2.5 w-2.5 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] sm:h-3 sm:w-3'
     : 'm-auto h-3 w-3 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] sm:h-3.5 sm:w-3.5';
 
   if (fullscreen && minimalFullscreen && manualMode) {
@@ -84,7 +84,7 @@ export function Dice({ value, rolling, disabled, manualMode, fullscreen = false,
               className="absolute inset-0 bg-slate-950/12"
               onClick={() => setManualPickerOpen(false)}
             />
-            <div className="relative z-10 grid w-40 grid-cols-3 gap-2 rounded-2xl border border-slate-200/80 bg-white/96 p-3 shadow-[0_20px_40px_rgba(15,23,42,0.28)] backdrop-blur-md">
+            <div className="relative z-10 grid w-44 grid-cols-3 gap-2 rounded-2xl border border-slate-200/80 bg-white/96 p-3 shadow-[0_20px_40px_rgba(15,23,42,0.28)] backdrop-blur-md sm:w-52 sm:gap-2.5 sm:p-4">
               {[1, 2, 3, 4, 5, 6].map((face) => (
                 <button
                   key={face}
@@ -94,7 +94,7 @@ export function Dice({ value, rolling, disabled, manualMode, fullscreen = false,
                     setManualPickerOpen(false);
                     onManualSubmit(face);
                   }}
-                  className={`rounded-lg border px-0 py-2.5 text-sm font-semibold transition ${selectedManual === face ? 'border-amber-200/60 bg-amber-300 text-slate-950' : 'border-slate-300/60 bg-slate-50 text-slate-900 hover:bg-slate-100'}`}
+                  className={`rounded-lg border px-0 py-2.5 text-sm font-semibold transition sm:py-3 sm:text-base ${selectedManual === face ? 'border-amber-200/60 bg-amber-300 text-slate-950' : 'border-slate-300/60 bg-slate-50 text-slate-900 hover:bg-slate-100'}`}
                 >
                   {face}
                 </button>

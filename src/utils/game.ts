@@ -49,9 +49,22 @@ export const createInitialTokens = () =>
     })),
   );
 
+
+export const isPlayerEnabledForCount = (color: PlayerColor, count: 2 | 3 | 4) => {
+  if (count === 2) {
+    return color === 'red' || color === 'yellow';
+  }
+
+  if (count === 3) {
+    return color !== 'blue';
+  }
+
+  return true;
+};
+
 export const createInitialLobby = (): LobbyState => ({
   playerCount: 2,
-  players: DEFAULT_PLAYERS,
+  players: DEFAULT_PLAYERS.map((player) => ({ ...player, enabled: isPlayerEnabledForCount(player.color, 2) })),
   options: DEFAULT_OPTIONS,
 });
 
@@ -74,7 +87,7 @@ export const createHistoryEntry = (
 export const createInitialState = (): GameState => ({
   phase: 'setup',
   lobby: createInitialLobby(),
-  players: DEFAULT_PLAYERS,
+  players: DEFAULT_PLAYERS.map((player) => ({ ...player, enabled: isPlayerEnabledForCount(player.color, 2) })),
   tokens: createInitialTokens(),
   currentTurnIndex: 0,
   turnCount: 1,
