@@ -13,7 +13,7 @@ export type PlayerKind = 'human' | 'ai';
 
 export type GameOptions = {
   autoMoveSingle: boolean;
-  fastMode: boolean;
+  performanceMode: boolean;
   showHints: boolean;
   turnTimerSeconds: 0 | 15 | 30;
   soundsEnabled: boolean;

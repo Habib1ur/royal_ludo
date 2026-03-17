@@ -61,6 +61,9 @@ function App() {
   const sounds = useSoundHooks(options.soundsEnabled);
   const boardViewportRef = useRef<HTMLDivElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false,
+  );
   const [boardScale, setBoardScale] = useState(1);
   const [timerRemaining, setTimerRemaining] = useState<number>(options.turnTimerSeconds);
   const enabledPlayers = players.filter((player) => player.enabled);
@@ -70,6 +73,25 @@ function App() {
     boolean
   >;
 
+
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const handleChange = (event: MediaQueryListEvent) => setIsMobileViewport(event.matches);
+    setIsMobileViewport(mediaQuery.matches);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
+  }, []);
 
   useEffect(() => {
     const handleFullscreen = async () => {
@@ -184,10 +206,10 @@ function App() {
           await latest.moveToken(choice);
         }
       }
-    }, latestDelay(options.fastMode, currentPlayer.kind));
+    }, latestDelay(options.performanceMode, currentPlayer.kind));
 
     return () => window.clearTimeout(timer);
-  }, [currentPlayer, diceRolling, diceValue, options.fastMode, phase, pickAiMove, selectableTokenIds, winner]);
+  }, [currentPlayer, diceRolling, diceValue, options.performanceMode, phase, pickAiMove, selectableTokenIds, winner]);
 
   useEffect(() => {
     if (phase !== 'playing' || winner || options.turnTimerSeconds === 0) {
@@ -279,7 +301,7 @@ function App() {
 
       <div className="relative flex min-h-screen flex-col p-2 sm:p-4 lg:p-5">
         {!isFullscreen ? (
-          <header className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-[1.4rem] border border-white/15 bg-white/10 px-3 py-3 shadow-glass backdrop-blur-xl sm:mb-3 sm:gap-3 sm:rounded-[1.8rem] sm:px-4">
+          <header className={`mb-2 flex flex-wrap items-center justify-between gap-2 rounded-[1.4rem] border border-white/15 bg-white/10 px-3 py-3 shadow-glass ${options.performanceMode ? '' : 'backdrop-blur-xl'} sm:mb-3 sm:gap-3 sm:rounded-[1.8rem] sm:px-4`}>
             <div>
               <p className="text-[10px] uppercase tracking-[0.35em] text-slate-300 sm:text-xs">Royal Ludo</p>
               <h1 className="font-display text-lg font-bold sm:text-2xl">Board match</h1>
@@ -323,10 +345,10 @@ function App() {
           ) : null}
 
           <section className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-2 sm:gap-3">
-            <div ref={boardViewportRef} className={`relative min-h-0 rounded-[1.6rem] border border-white/15 bg-white/8 p-2 shadow-glass backdrop-blur-xl sm:rounded-[2.2rem] sm:p-3 ${isFullscreen ? 'h-screen w-screen overflow-hidden rounded-none border-0 bg-[radial-gradient(circle_at_top,#17326f_0%,#08101d_46%,#030712_100%)] p-2 sm:p-3' : ''}`}>
+            <div ref={boardViewportRef} className={`relative min-h-0 rounded-[1.6rem] border border-white/15 bg-white/8 p-2 shadow-glass ${options.performanceMode && !isFullscreen ? '' : 'backdrop-blur-xl'} sm:rounded-[2.2rem] sm:p-3 ${isFullscreen ? 'h-screen w-screen overflow-hidden rounded-none border-0 bg-[radial-gradient(circle_at_top,#17326f_0%,#08101d_46%,#030712_100%)] p-2 sm:p-3' : ''}`}>
               <div className={`mx-auto h-full overflow-auto ${isFullscreen ? 'w-full max-w-none touch-pan-x touch-pan-y' : 'min-h-[22rem] w-full max-w-[min(98vw,1120px)] sm:min-h-[26rem] xl:max-h-[calc(100vh-11rem)]'}`}>
                 <div className="flex h-full min-w-max items-center justify-center transition-transform duration-200" style={{ transform: `scale(${boardScale})`, transformOrigin: 'center center' }}>
-                  <Board tokens={tokens} playersEnabled={playersEnabledMap} selectableTokenIds={options.showHints ? selectableTokenIds : []} onTokenSelect={handleMoveToken} onStepSound={sounds.playStep} compactMode={!isFullscreen} />
+                  <Board tokens={tokens} playersEnabled={playersEnabledMap} selectableTokenIds={options.showHints ? selectableTokenIds : []} onTokenSelect={handleMoveToken} onStepSound={sounds.playStep} compactMode={!isFullscreen} lowPerformanceMode={options.performanceMode} />
                 </div>
               </div>
 
@@ -359,7 +381,7 @@ function App() {
                     diceValue={diceValue}
                     selectableCount={selectableTokenIds.length}
                     autoMoveSingle={options.autoMoveSingle}
-                    fastMode={options.fastMode}
+                    performanceMode={options.performanceMode}
                     showHints={options.showHints}
                     turnTimerSeconds={options.turnTimerSeconds}
                     timerRemaining={timerRemaining}
@@ -373,7 +395,7 @@ function App() {
                   <StatsPanel stats={stats} players={players} />
                 </div>
                 <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_20rem] sm:gap-3 xl:grid-cols-1">
-                  <div className="rounded-[2rem] border border-white/15 bg-white/10 p-4 shadow-glass backdrop-blur-xl">
+                  <div className={`rounded-[2rem] border border-white/15 bg-white/10 p-4 shadow-glass ${options.performanceMode ? '' : 'backdrop-blur-xl'}`}>
                     <div className="mb-3 flex items-center gap-2 text-white">
                       <History className="h-4 w-4" />
                       <p className="font-display text-lg font-semibold">Recent history</p>
@@ -412,11 +434,11 @@ function App() {
   );
 }
 
-const latestDelay = (fastMode: boolean, kind: 'human' | 'ai') => {
+const latestDelay = (performanceMode: boolean, kind: 'human' | 'ai') => {
   if (kind === 'human') {
     return 0;
   }
-  return fastMode ? 520 : 900;
+  return performanceMode ? 520 : 900;
 };
 
 export default App;

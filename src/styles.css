@@ -189,6 +189,33 @@ input {
   filter: drop-shadow(0 2px 3px rgba(148, 163, 184, 0.5));
 }
 
+.board-shell-performance {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(226, 232, 240, 0.98));
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.18);
+}
+
+.board-shell-performance .center-finish {
+  box-shadow: inset 0 0 0 2px rgba(15, 23, 42, 0.08);
+  border-width: 3px;
+}
+
+.board-shell-performance .pawn-piece {
+  filter: drop-shadow(0 3px 4px rgba(15, 23, 42, 0.16));
+}
+
+.board-shell-performance .pawn-cap,
+.board-shell-performance .pawn-neck,
+.board-shell-performance .pawn-base {
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.52),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.14),
+    0 2px 4px rgba(15, 23, 42, 0.14);
+}
+
+.board-shell-performance .safe-star {
+  filter: none;
+}
+
 @media (max-width: 768px) {
   .pawn-piece {
     height: clamp(1.3rem, 5.4vw, 1.8rem);

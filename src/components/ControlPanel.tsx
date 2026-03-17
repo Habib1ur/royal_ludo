@@ -5,7 +5,7 @@ type ControlPanelProps = {
   diceValue: number | null;
   selectableCount: number;
   autoMoveSingle: boolean;
-  fastMode: boolean;
+  performanceMode: boolean;
   showHints: boolean;
   turnTimerSeconds: number;
   timerRemaining: number;
@@ -22,7 +22,7 @@ export function ControlPanel({
   diceValue,
   selectableCount,
   autoMoveSingle,
-  fastMode,
+  performanceMode,
   showHints,
   turnTimerSeconds,
   timerRemaining,
@@ -78,7 +78,7 @@ export function ControlPanel({
             <p className="font-medium">Match options</p>
           </div>
           <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.24em] text-slate-300">
-            <span className="rounded-full border border-white/10 px-3 py-1">{fastMode ? 'Fast mode' : 'Classic speed'}</span>
+            <span className="rounded-full border border-white/10 px-3 py-1">{performanceMode ? 'Performance mode' : 'Standard mode'}</span>
             <span className="rounded-full border border-white/10 px-3 py-1">{showHints ? 'Hints on' : 'Hints off'}</span>
             <span className="rounded-full border border-white/10 px-3 py-1">{autoMoveSingle ? 'Auto move' : 'Manual move'}</span>
             <span className="rounded-full border border-white/10 px-3 py-1">{turnTimerSeconds === 0 ? 'No timer' : `${turnTimerSeconds}s timer`}</span>

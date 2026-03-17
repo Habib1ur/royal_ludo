@@ -50,10 +50,10 @@ const buildToast = (title: string, description: string, tone: ToastMessage['tone
   tone,
 });
 
-const getMoveAnimationDelay = (steps: number, fastMode: boolean, capturedCount: number) => {
-  const perStep = fastMode ? 280 : 400;
-  const base = fastMode ? 380 : 560;
-  return base + steps * perStep + capturedCount * (fastMode ? 650 : 1100);
+const getMoveAnimationDelay = (steps: number, performanceMode: boolean, capturedCount: number) => {
+  const perStep = performanceMode ? 280 : 400;
+  const base = performanceMode ? 380 : 560;
+  return base + steps * perStep + capturedCount * (performanceMode ? 650 : 1100);
 };
 
 const resolveDiceValue = async (setState: any, getState: any, diceValue: number, source: 'roll' | 'manual') => {
@@ -111,10 +111,10 @@ const resolveDiceValue = async (setState: any, getState: any, diceValue: number,
   });
 
   if (selectableTokenIds.length === 0) {
-    await delay(activeState.options.fastMode ? 700 : 1150);
+    await delay(activeState.options.performanceMode ? 700 : 1150);
     getState().advanceTurn();
   } else if (selectableTokenIds.length === 1 && activeState.options.autoMoveSingle) {
-    await delay(activeState.options.fastMode ? 1400 : 1900);
+    await delay(activeState.options.performanceMode ? 1400 : 1900);
     const latest = getState();
     if (latest.phase === 'playing' && latest.diceValue !== null && latest.selectableTokenIds.includes(selectableTokenIds[0])) {
       await latest.moveToken(selectableTokenIds[0]);
@@ -195,7 +195,7 @@ export const useGameStore = create<GameState & GameActions>()(
           diceRolling: true,
           undoStack: [...current.undoStack, createUndoSnapshot(current)].slice(-20),
         }));
-        await delay(state.options.fastMode ? 540 : 980);
+        await delay(state.options.performanceMode ? 540 : 980);
 
         const diceValue = rollSecureDie();
         await resolveDiceValue(set, get, diceValue, 'roll');
@@ -215,7 +215,7 @@ export const useGameStore = create<GameState & GameActions>()(
           diceRolling: true,
           undoStack: [...current.undoStack, createUndoSnapshot(current)].slice(-20),
         }));
-        await delay(state.options.fastMode ? 720 : 1050);
+        await delay(state.options.performanceMode ? 720 : 1050);
         await resolveDiceValue(set, get, value, 'manual');
       },
 
@@ -288,7 +288,7 @@ export const useGameStore = create<GameState & GameActions>()(
           lastActionAt: Date.now(),
         }));
 
-        await delay(getMoveAnimationDelay(stepsTravelled, state.options.fastMode, 0));
+        await delay(getMoveAnimationDelay(stepsTravelled, state.options.performanceMode, 0));
 
         if (capturedTokens.length > 0) {
           set((current) => ({
@@ -323,7 +323,7 @@ export const useGameStore = create<GameState & GameActions>()(
             lastActionAt: Date.now(),
           }));
 
-          await delay(state.options.fastMode ? 220 : 380);
+          await delay(state.options.performanceMode ? 220 : 380);
         }
 
         if (won) {
@@ -490,7 +490,7 @@ export const useGameStore = create<GameState & GameActions>()(
         if (!state.options) {
           state.options = state.lobby?.options ?? {
             autoMoveSingle: true,
-            fastMode: false,
+            performanceMode: false,
             showHints: true,
             turnTimerSeconds: 0,
             soundsEnabled: true,

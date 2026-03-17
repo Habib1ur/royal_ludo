@@ -15,7 +15,7 @@ import { createId } from './helpers';
 
 export const DEFAULT_OPTIONS: GameOptions = {
   autoMoveSingle: true,
-  fastMode: false,
+  performanceMode: false,
   showHints: true,
   turnTimerSeconds: 0,
   soundsEnabled: true,

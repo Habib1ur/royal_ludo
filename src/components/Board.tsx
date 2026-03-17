@@ -24,6 +24,7 @@ type BoardProps = {
   onTokenSelect: (tokenId: string) => void;
   onStepSound?: () => void;
   compactMode?: boolean;
+  lowPerformanceMode?: boolean;
 };
 
 type CellKind = 'yard' | 'track' | 'lane' | 'center' | 'empty';
@@ -176,7 +177,7 @@ const buildSequence = (previous: Token | undefined, next: Token, compactMode: bo
   return [getDisplayCoordinate(next, compactMode)];
 };
 
-export function Board({ tokens, playersEnabled, selectableTokenIds, onTokenSelect, onStepSound, compactMode = false }: BoardProps) {
+export function Board({ tokens, playersEnabled, selectableTokenIds, onTokenSelect, onStepSound, compactMode = false, lowPerformanceMode = false }: BoardProps) {
   const tokenOffsets = compactMode ? tokenOffsetsCompact : tokenOffsetsRegular;
   const [displayCoords, setDisplayCoords] = useState<Record<string, BoardCoordinate>>(() =>
     Object.fromEntries(tokens.map((token) => [token.id, getDisplayCoordinate(token, compactMode)])),
@@ -245,7 +246,7 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, onTokenSelec
   }, [displayCoords, tokens, compactMode, tokenOffsets]);
 
   return (
-    <div className={`board-shell h-full w-full overflow-hidden rounded-[2.8rem] border border-white/20 p-3 shadow-board ${compactMode ? 'board-shell-compact' : ''}`}>
+    <div className={`board-shell h-full w-full overflow-hidden rounded-[2.8rem] border border-white/20 p-3 shadow-board ${compactMode ? 'board-shell-compact' : ''} ${lowPerformanceMode ? 'board-shell-performance' : ''}`}>
       <div className="board-grid relative aspect-square h-full w-full overflow-hidden rounded-[2.2rem] bg-[#f8fafc]">
         {boardCells.map((cell) => {
           const meta = cell.player ? PLAYER_META[cell.player] : null;
@@ -363,6 +364,8 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, onTokenSelec
             '--pawn-end': metaForToken.color,
             '--pawn-accent': metaForToken.accent,
           };
+          const stepLift = lowPerformanceMode ? (compactMode ? 4 : 6) : compactMode ? 7 : 11;
+          const selectLift = lowPerformanceMode ? (compactMode ? 2 : 3) : compactMode ? 6 : 10;
           return (
             <motion.div
               key={token.id}
@@ -376,8 +379,8 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, onTokenSelec
                 top: `${((coord.row + 0.5) / BOARD_SIZE) * 100}%`,
               }}
               transition={{
-                left: { duration: compactMode ? 0.22 : 0.28, ease: 'easeOut' },
-                top: { duration: compactMode ? 0.22 : 0.28, ease: 'easeOut' },
+                left: { duration: compactMode ? 0.18 : 0.24, ease: 'easeOut' },
+                top: { duration: compactMode ? 0.18 : 0.24, ease: 'easeOut' },
               }}
             >
               <motion.button
@@ -387,23 +390,39 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, onTokenSelec
                 className={`pawn-piece ${compactMode ? 'pawn-piece-compact' : ''} ${selectable ? 'pawn-piece-active' : ''}`}
                 style={pawnStyle}
                 initial={false}
-                animate={{
-                  x: offset.x,
-                  y: selectable
-                    ? [offset.y, offset.y - (compactMode ? 6 : 10), offset.y]
-                    : [offset.y, offset.y - (compactMode ? 7 : 11), offset.y + (compactMode ? 2 : 3), offset.y],
-                  scale: selectable ? [1, 1.05, 1] : [1, 0.92, 1.04, 1],
-                }}
+                animate={
+                  lowPerformanceMode
+                    ? {
+                        x: offset.x,
+                        y: selectable ? offset.y - selectLift : [offset.y, offset.y - stepLift, offset.y],
+                        scale: selectable ? 1.04 : [1, 1.02, 1],
+                      }
+                    : {
+                        x: offset.x,
+                        y: selectable
+                          ? [offset.y, offset.y - selectLift, offset.y]
+                          : [offset.y, offset.y - stepLift, offset.y + (compactMode ? 2 : 3), offset.y],
+                        scale: selectable ? [1, 1.05, 1] : [1, 0.92, 1.04, 1],
+                      }
+                }
                 transition={{
-                  x: { duration: 0.12, ease: 'easeInOut' },
-                  y: selectable
-                    ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' }
-                    : { duration: compactMode ? 0.34 : 0.42, ease: 'easeOut' },
-                  scale: selectable
-                    ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' }
-                    : { duration: compactMode ? 0.34 : 0.42, ease: 'easeOut' },
+                  x: { duration: 0.1, ease: 'easeInOut' },
+                  y: lowPerformanceMode
+                    ? selectable
+                      ? { duration: 0.2, ease: 'easeOut' }
+                      : { duration: compactMode ? 0.2 : 0.24, ease: 'easeOut' }
+                    : selectable
+                      ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' }
+                      : { duration: compactMode ? 0.34 : 0.42, ease: 'easeOut' },
+                  scale: lowPerformanceMode
+                    ? selectable
+                      ? { duration: 0.2, ease: 'easeOut' }
+                      : { duration: compactMode ? 0.2 : 0.24, ease: 'easeOut' }
+                    : selectable
+                      ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' }
+                      : { duration: compactMode ? 0.34 : 0.42, ease: 'easeOut' },
                 }}
-                whileHover={{ scale: selectable ? 1.1 : 1 }}
+                whileHover={lowPerformanceMode ? undefined : { scale: selectable ? 1.1 : 1 }}
                 whileTap={{ scale: selectable ? 0.96 : 1 }}
                 onClick={() => selectable && onTokenSelect(token.id)}
               >
