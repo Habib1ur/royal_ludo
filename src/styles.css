@@ -1,0 +1,202 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  font-family: Manrope, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.board-shell {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(219, 234, 254, 0.94)),
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.94), rgba(241, 245, 249, 0.98));
+}
+
+.board-shell-compact {
+  padding: 0.7rem;
+}
+
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(15, minmax(0, 1fr));
+  grid-template-rows: repeat(15, minmax(0, 1fr));
+}
+
+.center-finish {
+  background:
+    conic-gradient(
+      from 45deg,
+      #22c55e 0 25%,
+      #facc15 25% 50%,
+      #3b82f6 50% 75%,
+      #ef4444 75% 100%
+    );
+  clip-path: polygon(50% 4%, 96% 50%, 50% 96%, 4% 50%);
+  border: 4px solid rgba(255, 255, 255, 0.78);
+  border-radius: 1rem;
+  box-shadow:
+    inset 0 0 0 3px rgba(15, 23, 42, 0.08),
+    0 12px 25px rgba(15, 23, 42, 0.18);
+}
+
+.pawn-piece {
+  position: relative;
+  display: block;
+  height: clamp(1.75rem, 3.2vw, 2.45rem);
+  width: clamp(1.25rem, 2.35vw, 1.8rem);
+  border: 0;
+  background: transparent;
+  padding: 0;
+  filter: drop-shadow(0 7px 10px rgba(15, 23, 42, 0.24));
+}
+
+.pawn-piece-compact {
+  height: clamp(1.22rem, 2.2vw, 1.62rem);
+  width: clamp(0.95rem, 1.75vw, 1.25rem);
+}
+
+.pawn-piece::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 94%;
+  height: 14%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.14);
+  filter: blur(2px);
+}
+
+.pawn-cap,
+.pawn-neck,
+.pawn-base {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle at 34% 24%, var(--pawn-start) 0, var(--pawn-mid) 18%, var(--pawn-end) 62%, var(--pawn-accent) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.58),
+    inset 0 -3px 4px rgba(0, 0, 0, 0.18),
+    0 5px 10px rgba(15, 23, 42, 0.18);
+}
+
+.pawn-cap {
+  top: 2%;
+  width: 54%;
+  height: 28%;
+  border-radius: 999px;
+}
+
+.pawn-cap::after {
+  content: '';
+  position: absolute;
+  top: 16%;
+  left: 18%;
+  width: 34%;
+  height: 24%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.pawn-neck {
+  top: 24%;
+  width: 34%;
+  height: 28%;
+  border-radius: 38% 38% 30% 30% / 30% 30% 70% 70%;
+}
+
+.pawn-neck::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -8%;
+  width: 152%;
+  height: 16%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.pawn-base {
+  bottom: 8%;
+  width: 100%;
+  height: 30%;
+  border-radius: 42% 42% 50% 50% / 28% 28% 72% 72%;
+}
+
+.pawn-base::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  width: 76%;
+  height: 18%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.pawn-piece-active {
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 14px rgba(255, 255, 255, 0.32));
+}
+
+.safe-cell-ring {
+  position: absolute;
+  inset: 18%;
+  border-radius: 999px;
+  border: 2px solid rgba(15, 23, 42, 0.18);
+  background: radial-gradient(circle, rgba(255,255,255,0.92), rgba(248,250,252,0.55));
+}
+
+.safe-star {
+  width: 56%;
+  height: 56%;
+  background: rgba(255, 255, 255, 0.92);
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+  filter: drop-shadow(0 2px 3px rgba(148, 163, 184, 0.5));
+}
+
+@media (max-width: 768px) {
+  .pawn-piece {
+    height: clamp(1.3rem, 5.4vw, 1.8rem);
+    width: clamp(0.96rem, 3.8vw, 1.28rem);
+  }
+
+  .pawn-piece-compact {
+    height: clamp(1.08rem, 4.4vw, 1.4rem);
+    width: clamp(0.82rem, 3.3vw, 1.05rem);
+  }
+}
