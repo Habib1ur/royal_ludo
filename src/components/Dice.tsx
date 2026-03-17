@@ -24,10 +24,14 @@ const pipMap: Record<number, [number, number][]> = {
 export function Dice({ value, rolling, disabled, manualMode, fullscreen = false, minimalFullscreen = false, onRoll, onManualSubmit }: DiceProps) {
   const [displayValue, setDisplayValue] = useState(value ?? 1);
   const [selectedManual, setSelectedManual] = useState<number>(1);
+  const [manualPickerOpen, setManualPickerOpen] = useState(false);
 
   useEffect(() => {
     if (!rolling) {
       setDisplayValue(value ?? 1);
+      if (manualMode) {
+        setManualPickerOpen(false);
+      }
       return;
     }
 
@@ -38,7 +42,7 @@ export function Dice({ value, rolling, disabled, manualMode, fullscreen = false,
     }, 95);
 
     return () => window.clearInterval(interval);
-  }, [rolling, value]);
+  }, [manualMode, rolling, value]);
 
   const standardShell = fullscreen
     ? 'rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(165deg,rgba(248,250,252,0.97),rgba(226,232,240,0.94)_54%,rgba(203,213,225,0.9)_100%)] p-3 text-slate-950 shadow-[0_16px_30px_rgba(15,23,42,0.22)] backdrop-blur-md'
@@ -53,6 +57,54 @@ export function Dice({ value, rolling, disabled, manualMode, fullscreen = false,
     ? 'm-auto h-2.5 w-2.5 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)]'
     : 'm-auto h-3 w-3 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] sm:h-3.5 sm:w-3.5';
 
+  if (fullscreen && minimalFullscreen && manualMode) {
+    return (
+      <div className="relative">
+        <motion.button
+          type="button"
+          whileHover={{ scale: disabled ? 1 : 1.03 }}
+          whileTap={{ scale: disabled ? 1 : 0.98 }}
+          animate={rolling ? { rotate: [0, 90, 180, 270, 360], scale: [1, 1.08, 0.95, 1.02, 1] } : { rotate: 0, scale: 1 }}
+          transition={{ duration: 0.9, ease: 'easeInOut' }}
+          onClick={() => !disabled && setManualPickerOpen((open) => !open)}
+          disabled={disabled}
+          className={`${standardDie} disabled:cursor-not-allowed disabled:opacity-80`}
+          aria-label="Choose manual dice value"
+        >
+          {pipMap[rolling ? displayValue : selectedManual].map(([row, col], index) => (
+            <span key={`${row}-${col}-${index}`} className={pipClass} style={{ gridRow: row, gridColumn: col }} />
+          ))}
+        </motion.button>
+
+        {manualPickerOpen ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <button
+              type="button"
+              aria-label="Close dice picker"
+              className="absolute inset-0 bg-slate-950/12"
+              onClick={() => setManualPickerOpen(false)}
+            />
+            <div className="relative z-10 grid w-40 grid-cols-3 gap-2 rounded-2xl border border-slate-200/80 bg-white/96 p-3 shadow-[0_20px_40px_rgba(15,23,42,0.28)] backdrop-blur-md">
+              {[1, 2, 3, 4, 5, 6].map((face) => (
+                <button
+                  key={face}
+                  type="button"
+                  onClick={() => {
+                    setSelectedManual(face);
+                    setManualPickerOpen(false);
+                    onManualSubmit(face);
+                  }}
+                  className={`rounded-lg border px-0 py-2.5 text-sm font-semibold transition ${selectedManual === face ? 'border-amber-200/60 bg-amber-300 text-slate-950' : 'border-slate-300/60 bg-slate-50 text-slate-900 hover:bg-slate-100'}`}
+                >
+                  {face}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   if (fullscreen && minimalFullscreen && !manualMode) {
     return (

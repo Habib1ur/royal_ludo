@@ -364,13 +364,9 @@ function App() {
 
               {isFullscreen ? (
                 <div
-                  className={`absolute z-30 ${fullscreenDicePosition} ${
-                    isMobileViewport && !(options.manualDiceInput && currentPlayer?.kind !== 'ai')
-                      ? ''
-                      : 'w-[clamp(12.5rem,18vw,14rem)]'
-                  }`}
+                  className={`absolute z-30 ${fullscreenDicePosition} ${isMobileViewport ? '' : 'w-[clamp(12.5rem,18vw,14rem)]'}`}
                 >
-                  <Dice value={diceValue} rolling={diceRolling} disabled={diceRolling || diceValue !== null || phase === 'finished' || currentPlayer?.kind === 'ai'} manualMode={options.manualDiceInput && currentPlayer?.kind !== 'ai'} fullscreen minimalFullscreen={isMobileViewport && !(options.manualDiceInput && currentPlayer?.kind !== 'ai')} onRoll={handleRoll} onManualSubmit={useManualDice} />
+                  <Dice value={diceValue} rolling={diceRolling} disabled={diceRolling || diceValue !== null || phase === 'finished' || currentPlayer?.kind === 'ai'} manualMode={options.manualDiceInput && currentPlayer?.kind !== 'ai'} fullscreen minimalFullscreen={isMobileViewport} onRoll={handleRoll} onManualSubmit={useManualDice} />
                 </div>
               ) : null}
             </div>
