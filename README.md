@@ -1,112 +1,210 @@
 # Royal Ludo
 
-A frontend-only Ludo game built with React, TypeScript, Vite, Tailwind CSS, Framer Motion, Lucide React, and Zustand.
+A polished browser-based **Ludo game** built with **React**, **TypeScript**, and **Vite**.
+It is designed for local play, smooth fullscreen sessions, clean animations, and lightweight performance modes for smaller devices.
 
-## Features
+---
 
-- 2, 3, and 4 player local play
-- Standard Ludo rules
-- Realistic Ludo board layout
+## Overview
+
+Royal Ludo is a frontend-only board game experience with:
+
+- local multiplayer for **2, 3, or 4 players**
+- support for **human and AI seats**
+- a responsive animated board
+- fullscreen play for phones, tablets, and desktop
+- persistent saved matches using `localStorage`
+
+No backend is required.
+
+---
+
+## Highlights
+
+### Gameplay
+
+- Standard Ludo movement rules
+- Roll a `6` to leave home
+- Exact roll required to finish
+- Safe cells protect tokens from capture
+- Captures send opponents back home
+- First player to finish all four tokens wins
+
+### Match Tools
+
+- Undo last turn
+- Move history
+- Live match stats
+- Resume saved game
+- Manual/offline dice entry
+- Turn timer options
+
+### Visual Experience
+
+- Premium-looking board layout
 - Fullscreen board mode
-- Normal dice and offline/manual dice mode
-- Move history and match stats
-- Local save with `localStorage`
-- Sound hooks and lightweight performance modes
-- `Performance mode 1` and `Performance mode 2`
+- Responsive UI for mobile and tablet
+- Dark and light theme support
+- Performance modes for weaker devices
+
+### Audio and Feedback
+
+- Dice, step, capture, and win sound hooks
+- Optional vibration feedback on supported devices
+
+---
+
+## Feature Set
+
+| Area | Included |
+| --- | --- |
+| Player count | `2`, `3`, `4` players |
+| Player type | Human and AI |
+| Dice modes | Normal roll and manual dice input |
+| Save system | Browser `localStorage` |
+| Performance | `Off`, `basic`, `ultra` |
+| Timer | `Off`, `15s`, `30s` |
+| Themes | Dark and Light |
+| Platform | Frontend-only Vite app |
+
+---
 
 ## Tech Stack
 
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- Framer Motion
-- Zustand
-- Lucide React
+- **React 19**
+- **TypeScript**
+- **Vite**
+- **Tailwind CSS**
+- **Framer Motion**
+- **Zustand**
+- **Lucide React**
+
+---
 
 ## Getting Started
 
-### Install
+### Install dependencies
 
 ```bash
 npm install
 ```
 
-### Run locally
+### Start development server
 
 ```bash
 npm run dev
 ```
 
-### Production build
+### Build for production
 
 ```bash
 npm run build
 ```
 
-## How to Play
+### Preview production build
 
-- Roll a `6` to bring a pawn out of home.
-- Rolling `6` gives an extra turn.
-- Capturing an opponent sends that pawn back home.
-- Safe cells cannot be captured.
-- Exact roll is required to finish.
-- First player to finish all 4 pawns wins.
+```bash
+npm run preview
+```
+
+---
+
+## How To Play
+
+1. Start a match from the lobby.
+2. Choose player count and configure seats.
+3. Roll the dice or enter the value manually in offline dice mode.
+4. Move a valid token.
+5. Capture opponents, race through the board, and finish all four tokens.
+
+### Core Rules
+
+- A token can only leave home on a roll of `6`
+- Safe cells cannot be captured
+- Illegal moves are blocked automatically
+- A player must roll the exact value needed to finish
+- The first player to finish all four tokens wins
+
+---
 
 ## Match Options
 
-### Auto move
-Automatically moves a pawn when only one legal move exists.
+### Auto Move
+Automatically moves a token when there is only one legal move.
 
-### Performance mode
-- `Off`: full visuals
-- `Performance mode 1`: lighter UI and reduced effects
-- `Performance mode 2`: ultra-light flat UI for weaker devices
+### Move Hints
+Highlights selectable tokens more clearly.
 
-### Move hints
-Shows movable pawns more clearly.
+### Performance Modes
 
-### Turn timer
-- Off
-- 15 seconds
-- 30 seconds
+- `Off`: full effects and visuals
+- `basic`: lighter styling and reduced effects
+- `ultra`: minimal rendering for low-end devices
+
+### Turn Timer
+
+- `Off`
+- `15 seconds`
+- `30 seconds`
 
 ### Sounds
-Enables dice, move, capture, and win sounds.
+Enables built-in game sound effects.
 
-### Offline dice
-Lets you enter the real dice number manually.
+### Offline Dice
+Lets players enter the real dice value manually instead of rolling digitally.
 
-## Fullscreen Behavior
+---
 
-- Desktop: fullscreen board with floating dice
-- Mobile: icon-only fullscreen controls
-- `Performance mode 2`: fixed lightweight fullscreen dice dock
+## Fullscreen Experience
+
+Royal Ludo is optimized for fullscreen board play.
+
+- **Desktop:** large centered board with floating controls
+- **Phone and tablet:** fullscreen board with landscape-friendly play
+- **Compact widths:** icon-first controls to save space
+
+Note: automatic orientation lock depends on browser/device support.
+
+---
 
 ## Project Structure
 
 ```text
 src/
-  components/
-  constants/
-  hooks/
-  store/
-  types/
-  utils/
+  components/   Reusable UI pieces
+  constants/    Static board and player data
+  hooks/        Sound and interaction hooks
+  store/        Zustand game state
+  types/        TypeScript models
+  utils/        Rule and board helpers
 ```
+
+---
 
 ## Deployment
 
-This is a frontend-only Vite app and works well on Vercel.
+This project works well on **Vercel** or any static hosting platform.
 
-Recommended Vercel settings:
+### Recommended Vercel settings
 
 - Framework Preset: `Vite`
 - Build Command: `npm run build`
 - Output Directory: `dist`
 
+---
+
 ## Notes
 
-- Saved matches are stored in the browser.
-- No backend is required.
-- The project is designed for future expansion such as AI or online multiplayer.
+- Match progress is saved in the browser
+- No backend or database is required
+- The current architecture is suitable for future additions like:
+  - stronger AI
+  - online multiplayer
+  - custom rule presets
+  - player profiles
+
+---
+
+## Status
+
+Royal Ludo is currently a **frontend game project** focused on local multiplayer, responsive fullscreen play, and clean game-state management.
