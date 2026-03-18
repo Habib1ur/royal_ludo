@@ -79,24 +79,46 @@ export function StartScreen({
                           : 'off',
                   })
                 }
-                className={`rounded-[1.3rem] border px-4 py-4 text-left transition ${options.performanceMode !== 'off' ? 'border-white/30 bg-white/15' : 'border-white/10 bg-white/5'}`}
+                className={`rounded-[1.3rem] border px-4 py-4 text-left transition ${
+                  options.performanceMode === 'basic'
+                    ? 'border-emerald-300/45 bg-emerald-400/10'
+                    : options.performanceMode === 'ultra'
+                      ? 'border-sky-300/45 bg-sky-400/10'
+                      : 'border-white/10 bg-white/5'
+                }`}
               >
                 <p className="text-sm font-semibold text-white">Performance mode</p>
                 <p className="mt-1 text-sm text-slate-300">
                   {options.performanceMode === 'off'
-                    ? 'Off. Keeps the full visual experience.'
+                    ? 'Performance mode is off'
                     : options.performanceMode === 'basic'
-                      ? 'Performance mode. Lighter effects and simpler surfaces.'
-                      : 'Performance mode 2. Flat ultra-light UI for weaker devices.'}
+                      ? 'Performance mode 1 activated'
+                      : 'Performance mode 2 activated'}
                 </p>
               </button>
               <button type="button" onClick={() => onOptionsChange({ showHints: !options.showHints })} className={`rounded-[1.3rem] border px-4 py-4 text-left transition ${options.showHints ? 'border-white/30 bg-white/15' : 'border-white/10 bg-white/5'}`}>
                 <p className="text-sm font-semibold text-white">Move hints</p>
                 <p className="mt-1 text-sm text-slate-300">Highlight playable pawns on the board.</p>
               </button>
-              <button type="button" onClick={() => onOptionsChange({ turnTimerSeconds: options.turnTimerSeconds === 0 ? 15 : options.turnTimerSeconds === 15 ? 30 : 0 })} className={`rounded-[1.3rem] border px-4 py-4 text-left transition ${options.turnTimerSeconds > 0 ? 'border-white/30 bg-white/15' : 'border-white/10 bg-white/5'}`}>
+              <button
+                type="button"
+                onClick={() => onOptionsChange({ turnTimerSeconds: options.turnTimerSeconds === 0 ? 15 : options.turnTimerSeconds === 15 ? 30 : 0 })}
+                className={`rounded-[1.3rem] border px-4 py-4 text-left transition ${
+                  options.turnTimerSeconds === 15
+                    ? 'border-emerald-300/45 bg-emerald-400/10'
+                    : options.turnTimerSeconds === 30
+                      ? 'border-sky-300/45 bg-sky-400/10'
+                      : 'border-white/10 bg-white/5'
+                }`}
+              >
                 <div className="flex items-center gap-2 text-white"><TimerReset className="h-4 w-4" /><p className="text-sm font-semibold">Turn timer</p></div>
-                <p className="mt-1 text-sm text-slate-300">Cycle between off, 15s, and 30s.</p>
+                <p className="mt-1 text-sm text-slate-300">
+                  {options.turnTimerSeconds === 0
+                    ? 'Turn timer is off'
+                    : options.turnTimerSeconds === 15
+                      ? '15 second timer activated'
+                      : '30 second timer activated'}
+                </p>
               </button>
               <button type="button" onClick={() => onOptionsChange({ soundsEnabled: !options.soundsEnabled })} className={`rounded-[1.3rem] border px-4 py-4 text-left transition ${options.soundsEnabled ? 'border-white/30 bg-white/15' : 'border-white/10 bg-white/5'}`}>
                 <div className="flex items-center gap-2 text-white"><Volume2 className="h-4 w-4" /><p className="text-sm font-semibold">Sounds</p></div>
