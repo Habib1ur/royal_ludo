@@ -11,9 +11,11 @@ export type BoardCoordinate = {
 
 export type PlayerKind = 'human' | 'ai';
 
+export type PerformanceMode = 'off' | 'basic' | 'ultra';
+
 export type GameOptions = {
   autoMoveSingle: boolean;
-  performanceMode: boolean;
+  performanceMode: PerformanceMode;
   showHints: boolean;
   turnTimerSeconds: 0 | 15 | 30;
   soundsEnabled: boolean;

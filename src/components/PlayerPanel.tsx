@@ -1,23 +1,25 @@
 import { Bot, Crown, Star, UserRound } from 'lucide-react';
 import { PLAYER_META } from '../constants/players';
-import { PlayerConfig, Token } from '../types/game';
+import { PerformanceMode, PlayerConfig, Token } from '../types/game';
 
 type PlayerPanelProps = {
   player: PlayerConfig;
   tokens: Token[];
   isActive: boolean;
   isWinner: boolean;
-  performanceMode?: boolean;
+  performanceMode?: PerformanceMode;
 };
 
-export function PlayerPanel({ player, tokens, isActive, isWinner, performanceMode = false }: PlayerPanelProps) {
+export function PlayerPanel({ player, tokens, isActive, isWinner, performanceMode = 'off' }: PlayerPanelProps) {
   const meta = PLAYER_META[player.color];
   const finished = tokens.filter((token) => token.state === 'finished').length;
   const atHome = tokens.filter((token) => token.state === 'home').length;
+  const isPerformance = performanceMode !== 'off';
+  const isUltra = performanceMode === 'ultra';
 
   return (
     <section
-      className={`rounded-[2rem] border p-4 transition ${performanceMode ? (isActive ? 'border-white/20 bg-slate-900/92 shadow-[0_8px_18px_rgba(15,23,42,0.14)]' : 'border-white/8 bg-slate-900/82 shadow-[0_6px_14px_rgba(15,23,42,0.12)]') : (isActive ? 'border-white/30 bg-white/15 shadow-glass backdrop-blur-xl ring-1 ring-white/20' : 'border-white/10 bg-white/10 shadow-glass backdrop-blur-xl')} ${!player.enabled ? 'opacity-50' : ''}`}
+      className={`rounded-[2rem] border p-4 transition ${isUltra ? (isActive ? 'border-white/20 bg-slate-950 shadow-none' : 'border-white/8 bg-slate-950/92 shadow-none') : isPerformance ? (isActive ? 'border-white/20 bg-slate-900/92 shadow-[0_8px_18px_rgba(15,23,42,0.14)]' : 'border-white/8 bg-slate-900/82 shadow-[0_6px_14px_rgba(15,23,42,0.12)]') : (isActive ? 'border-white/30 bg-white/15 shadow-glass backdrop-blur-xl ring-1 ring-white/20' : 'border-white/10 bg-white/10 shadow-glass backdrop-blur-xl')} ${!player.enabled ? 'opacity-50' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -53,11 +55,11 @@ export function PlayerPanel({ player, tokens, isActive, isWinner, performanceMod
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <div className={`rounded-2xl border p-3 ${performanceMode ? 'border-white/8 bg-slate-950/68' : 'border-white/10 bg-slate-950/30'}`}>
+        <div className={`rounded-2xl border p-3 ${isUltra ? 'border-white/8 bg-slate-950 shadow-none' : isPerformance ? 'border-white/8 bg-slate-950/68' : 'border-white/10 bg-slate-950/30'}`}>
           <p className="text-slate-400">Finished</p>
           <p className="mt-1 text-xl font-semibold text-white">{finished}/4</p>
         </div>
-        <div className={`rounded-2xl border p-3 ${performanceMode ? 'border-white/8 bg-slate-950/68' : 'border-white/10 bg-slate-950/30'}`}>
+        <div className={`rounded-2xl border p-3 ${isUltra ? 'border-white/8 bg-slate-950 shadow-none' : isPerformance ? 'border-white/8 bg-slate-950/68' : 'border-white/10 bg-slate-950/30'}`}>
           <p className="text-slate-400">At Home</p>
           <p className="mt-1 text-xl font-semibold text-white">{atHome}</p>
         </div>

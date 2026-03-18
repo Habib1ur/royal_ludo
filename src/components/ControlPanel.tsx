@@ -1,11 +1,13 @@
 import { RotateCcw, SlidersHorizontal, Undo2 } from 'lucide-react';
 
+import { PerformanceMode } from '../types/game';
+
 type ControlPanelProps = {
   turnLabel: string;
   diceValue: number | null;
   selectableCount: number;
   autoMoveSingle: boolean;
-  performanceMode: boolean;
+  performanceMode: PerformanceMode;
   showHints: boolean;
   turnTimerSeconds: number;
   timerRemaining: number;
@@ -33,15 +35,18 @@ export function ControlPanel({
   theme,
   onToggleTheme,
 }: ControlPanelProps) {
+  const isPerformance = performanceMode !== 'off';
+  const isUltra = performanceMode === 'ultra';
+
   return (
-    <section className={`rounded-[2rem] border p-5 ${performanceMode ? 'border-white/10 bg-slate-900/90 shadow-[0_8px_18px_rgba(15,23,42,0.16)]' : 'border-white/15 bg-white/10 shadow-glass backdrop-blur-xl'}`}>
+    <section className={`rounded-[2rem] border p-5 ${isUltra ? 'border-white/10 bg-slate-950 shadow-none' : isPerformance ? 'border-white/10 bg-slate-900/90 shadow-[0_8px_18px_rgba(15,23,42,0.16)]' : 'border-white/15 bg-white/10 shadow-glass backdrop-blur-xl'}`}>
       <div className="mb-4">
         <p className="text-xs uppercase tracking-[0.3em] text-slate-300">Match status</p>
         <h2 className="font-display text-2xl font-semibold text-white">{turnLabel}</h2>
       </div>
 
       <div className="grid gap-3 text-sm text-slate-200">
-        <div className={`rounded-2xl border p-4 ${performanceMode ? 'border-white/8 bg-slate-950/70' : 'border-white/10 bg-slate-950/30'}`}>
+        <div className={`rounded-2xl border p-4 ${isUltra ? 'border-white/8 bg-slate-950 shadow-none' : isPerformance ? 'border-white/8 bg-slate-950/70' : 'border-white/10 bg-slate-950/30'}`}>
           {diceValue === null
             ? 'Roll the dice to reveal valid moves.'
             : selectableCount > 1
@@ -54,7 +59,7 @@ export function ControlPanel({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className={`rounded-2xl border p-4 ${performanceMode ? 'border-white/8 bg-slate-950/70' : 'border-white/10 bg-white/5'}`}>
+          <div className={`rounded-2xl border p-4 ${isUltra ? 'border-white/8 bg-slate-950 shadow-none' : isPerformance ? 'border-white/8 bg-slate-950/70' : 'border-white/10 bg-white/5'}`}>
             <p className="text-xs uppercase tracking-[0.24em] text-slate-300">Turn timer</p>
             <p className="mt-2 text-xl font-semibold text-white">{turnTimerSeconds === 0 ? 'Off' : `${timerRemaining}s`}</p>
           </div>
@@ -62,7 +67,7 @@ export function ControlPanel({
             type="button"
             onClick={onUndo}
             disabled={!canUndo}
-            className={`rounded-2xl border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${performanceMode ? 'border-white/8 bg-slate-950/70 hover:bg-slate-900' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
+            className={`rounded-2xl border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${isUltra ? 'border-white/8 bg-slate-950 hover:bg-slate-900' : isPerformance ? 'border-white/8 bg-slate-950/70 hover:bg-slate-900' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
           >
             <div className="flex items-center gap-2 text-white">
               <Undo2 className="h-4 w-4" />
@@ -72,13 +77,13 @@ export function ControlPanel({
           </button>
         </div>
 
-        <div className={`rounded-2xl border p-4 ${performanceMode ? 'border-white/8 bg-slate-950/70' : 'border-white/10 bg-white/5'}`}>
+        <div className={`rounded-2xl border p-4 ${isUltra ? 'border-white/8 bg-slate-950 shadow-none' : isPerformance ? 'border-white/8 bg-slate-950/70' : 'border-white/10 bg-white/5'}`}>
           <div className="mb-3 flex items-center gap-2 text-white">
             <SlidersHorizontal className="h-4 w-4" />
             <p className="font-medium">Match options</p>
           </div>
           <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.24em] text-slate-300">
-            <span className="rounded-full border border-white/10 px-3 py-1">{performanceMode ? 'Performance mode' : 'Standard mode'}</span>
+            <span className="rounded-full border border-white/10 px-3 py-1">{performanceMode === 'ultra' ? 'Performance mode 2' : performanceMode === 'basic' ? 'Performance mode' : 'Standard mode'}</span>
             <span className="rounded-full border border-white/10 px-3 py-1">{showHints ? 'Hints on' : 'Hints off'}</span>
             <span className="rounded-full border border-white/10 px-3 py-1">{autoMoveSingle ? 'Auto move' : 'Manual move'}</span>
             <span className="rounded-full border border-white/10 px-3 py-1">{turnTimerSeconds === 0 ? 'No timer' : `${turnTimerSeconds}s timer`}</span>
@@ -86,16 +91,16 @@ export function ControlPanel({
         </div>
 
         <div className="grid grid-cols-4 gap-3">
-          <button type="button" onClick={onHelp} className={`rounded-2xl border px-4 py-3 transition ${performanceMode ? 'border-white/8 bg-slate-950/70 hover:bg-slate-900' : 'border-white/10 bg-white/10 hover:bg-white/15'}`}>
+          <button type="button" onClick={onHelp} className={`rounded-2xl border px-4 py-3 transition ${isUltra ? 'border-white/8 bg-slate-950 hover:bg-slate-900' : isPerformance ? 'border-white/8 bg-slate-950/70 hover:bg-slate-900' : 'border-white/10 bg-white/10 hover:bg-white/15'}`}>
             Rules
           </button>
-          <button type="button" onClick={onToggleTheme} className={`rounded-2xl border px-4 py-3 transition ${performanceMode ? 'border-white/8 bg-slate-950/70 hover:bg-slate-900' : 'border-white/10 bg-white/10 hover:bg-white/15'}`}>
+          <button type="button" onClick={onToggleTheme} className={`rounded-2xl border px-4 py-3 transition ${isUltra ? 'border-white/8 bg-slate-950 hover:bg-slate-900' : isPerformance ? 'border-white/8 bg-slate-950/70 hover:bg-slate-900' : 'border-white/10 bg-white/10 hover:bg-white/15'}`}>
             {theme === 'dark' ? 'Light' : 'Dark'}
           </button>
           <button type="button" onClick={onUndo} disabled={!canUndo} className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50">
             Undo
           </button>
-          <button type="button" onClick={onReset} className={`rounded-2xl border px-4 py-3 transition ${performanceMode ? 'border-white/8 bg-slate-950/70 hover:bg-slate-900' : 'border-white/10 bg-white/10 hover:bg-white/15'}`}>
+          <button type="button" onClick={onReset} className={`rounded-2xl border px-4 py-3 transition ${isUltra ? 'border-white/8 bg-slate-950 hover:bg-slate-900' : isPerformance ? 'border-white/8 bg-slate-950/70 hover:bg-slate-900' : 'border-white/10 bg-white/10 hover:bg-white/15'}`}>
             <span className="inline-flex items-center gap-2"><RotateCcw className="h-4 w-4" />Reset</span>
           </button>
         </div>

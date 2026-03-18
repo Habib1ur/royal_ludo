@@ -5,6 +5,7 @@ import {
   GameState,
   LobbyState,
   MatchStats,
+  PerformanceMode,
   MoveHistoryEntry,
   PlayerColor,
   PlayerStats,
@@ -15,7 +16,7 @@ import { createId } from './helpers';
 
 export const DEFAULT_OPTIONS: GameOptions = {
   autoMoveSingle: true,
-  performanceMode: false,
+  performanceMode: 'off',
   showHints: true,
   turnTimerSeconds: 0,
   soundsEnabled: true,
@@ -38,6 +39,10 @@ export const createInitialStats = (): MatchStats => ({
   yellow: createEmptyPlayerStats(),
   blue: createEmptyPlayerStats(),
 });
+
+export const isPerformanceModeOn = (mode: PerformanceMode) => mode !== 'off';
+
+export const isUltraPerformanceMode = (mode: PerformanceMode) => mode === 'ultra';
 
 export const createInitialTokens = () =>
   PLAYER_ORDER.flatMap((owner) =>

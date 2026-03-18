@@ -13,7 +13,7 @@ import {
   YARD_BOUNDS,
 } from '../constants/board';
 import { PLAYER_META, PLAYER_ORDER } from '../constants/players';
-import { BoardCoordinate, PlayerColor, Token } from '../types/game';
+import { BoardCoordinate, PerformanceMode, PlayerColor, Token } from '../types/game';
 import { getHomeSlotIndex, getTokenCoordinate, getTokenPathCoordinate } from '../utils/board';
 
 type BoardProps = {
@@ -24,7 +24,7 @@ type BoardProps = {
   onTokenSelect: (tokenId: string) => void;
   onStepSound?: () => void;
   compactMode?: boolean;
-  lowPerformanceMode?: boolean;
+  performanceMode?: PerformanceMode;
 };
 
 type CellKind = 'yard' | 'track' | 'lane' | 'center' | 'empty';
@@ -198,7 +198,7 @@ const PawnToken = memo(function PawnToken({
   offset,
   selectable,
   compactMode,
-  lowPerformanceMode,
+  performanceMode,
   onTokenSelect,
   onStepSound,
 }: {
@@ -207,7 +207,7 @@ const PawnToken = memo(function PawnToken({
   offset: { x: number; y: number };
   selectable: boolean;
   compactMode: boolean;
-  lowPerformanceMode: boolean;
+  performanceMode: PerformanceMode;
   onTokenSelect: (tokenId: string) => void;
   onStepSound?: () => void;
 }) {
@@ -218,7 +218,9 @@ const PawnToken = memo(function PawnToken({
     '--pawn-end': metaForToken.color,
     '--pawn-accent': metaForToken.accent,
   };
-  const selectLift = lowPerformanceMode ? (compactMode ? 2 : 3) : compactMode ? 6 : 10;
+  const isPerformance = performanceMode !== 'off';
+  const isUltra = performanceMode === 'ultra';
+  const selectLift = isUltra ? 0 : isPerformance ? (compactMode ? 2 : 3) : compactMode ? 6 : 10;
   const controls = useAnimationControls();
   const previousTokenRef = useRef<Token | undefined>(undefined);
   const currentCoordRef = useRef<BoardCoordinate>(targetCoord);
@@ -277,20 +279,20 @@ const PawnToken = memo(function PawnToken({
       <motion.button
         type="button"
         aria-label={`Move ${token.owner} pawn`}
-        className={`pawn-piece ${compactMode ? 'pawn-piece-compact' : ''} ${selectable ? 'pawn-piece-active' : ''} ${lowPerformanceMode ? 'pawn-piece-performance' : ''}`}
+        className={`pawn-piece ${compactMode ? 'pawn-piece-compact' : ''} ${selectable ? 'pawn-piece-active' : ''} ${isPerformance ? 'pawn-piece-performance' : ''} ${isUltra ? 'pawn-piece-ultra' : ''}`}
         style={pawnStyle}
         initial={false}
         animate={{
           x: offset.x,
-          y: selectable ? [offset.y, offset.y - selectLift, offset.y] : offset.y,
-          scale: selectable ? [1, 1.04, 1] : 1,
+          y: selectable && !isUltra ? [offset.y, offset.y - selectLift, offset.y] : offset.y,
+          scale: selectable && !isUltra ? [1, 1.04, 1] : 1,
         }}
         transition={{
           x: { duration: 0.08, ease: 'linear' },
-          y: selectable ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.08, ease: 'linear' },
-          scale: selectable ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.08, ease: 'linear' },
+          y: selectable && !isUltra ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.08, ease: 'linear' },
+          scale: selectable && !isUltra ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.08, ease: 'linear' },
         }}
-        whileHover={lowPerformanceMode ? undefined : { scale: selectable ? 1.06 : 1 }}
+        whileHover={isPerformance ? undefined : { scale: selectable ? 1.06 : 1 }}
         whileTap={{ scale: selectable ? 0.96 : 1 }}
         onClick={() => selectable && onTokenSelect(token.id)}
       >
@@ -303,9 +305,11 @@ const PawnToken = memo(function PawnToken({
   );
 });
 
-export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayerColor, onTokenSelect, onStepSound, compactMode = false, lowPerformanceMode = false }: BoardProps) {
+export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayerColor, onTokenSelect, onStepSound, compactMode = false, performanceMode = 'off' }: BoardProps) {
   const visibleTokens = useMemo(() => tokens.filter((token) => playersEnabled[token.owner]), [tokens, playersEnabled]);
   const tokenOffsets = compactMode ? tokenOffsetsCompact : tokenOffsetsRegular;
+  const isPerformance = performanceMode !== 'off';
+  const isUltra = performanceMode === 'ultra';
 
   const groupedTokens = useMemo(() => {
     const coordinateToTokens = new Map<string, { coord: BoardCoordinate; tokens: Token[] }>();
@@ -322,8 +326,8 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayer
   }, [compactMode, tokenOffsets, visibleTokens]);
 
   return (
-    <div className={`board-shell h-full w-full overflow-hidden rounded-[2.8rem] border border-white/20 p-3 ${lowPerformanceMode ? 'shadow-[0_10px_22px_rgba(15,23,42,0.12)] bg-white' : 'shadow-board'} ${compactMode ? 'board-shell-compact' : ''} ${lowPerformanceMode ? 'board-shell-performance' : ''}`}>
-      <div className={`board-grid relative aspect-square h-full w-full overflow-hidden rounded-[2.2rem] ${lowPerformanceMode ? 'bg-white' : 'bg-[#f8fafc]'}`}>
+    <div className={`board-shell h-full w-full overflow-hidden rounded-[2.8rem] border border-white/20 p-3 ${isUltra ? 'shadow-none bg-white' : isPerformance ? 'shadow-[0_10px_22px_rgba(15,23,42,0.12)] bg-white' : 'shadow-board'} ${compactMode ? 'board-shell-compact' : ''} ${isPerformance ? 'board-shell-performance' : ''} ${isUltra ? 'board-shell-ultra' : ''}`}>
+      <div className={`board-grid relative aspect-square h-full w-full overflow-hidden rounded-[2.2rem] ${isPerformance ? 'bg-white' : 'bg-[#f8fafc]'}`}>
         {boardCells.map((cell) => {
           const meta = cell.player ? PLAYER_META[cell.player] : null;
           const disabledPlayer = cell.player ? !playersEnabled[cell.player] : false;
@@ -338,9 +342,11 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayer
                   cell.kind === 'yard'
                     ? `${meta?.soft ?? '#fff'}`
                     : cell.kind === 'lane'
-                      ? lowPerformanceMode
+                      ? isUltra
                         ? `${meta?.soft ?? '#fff'}`
-                        : `linear-gradient(135deg, ${meta?.soft ?? '#fff'}, #ffffff)`
+                        : isPerformance
+                          ? `${meta?.soft ?? '#fff'}`
+                          : `linear-gradient(135deg, ${meta?.soft ?? '#fff'}, #ffffff)`
                       : undefined,
                 opacity: disabledPlayer ? 0.42 : 1,
               }}
@@ -372,39 +378,41 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayer
                 top: `${bounds.rowStart * CELL_PERCENT + HOME_PANEL_INSET}%`,
                 width: `${HOME_PANEL_SIZE}%`,
                 height: `${HOME_PANEL_SIZE}%`,
-                background: lowPerformanceMode ? `${meta.color}` : `linear-gradient(150deg, ${meta.soft}, ${meta.color})`,
+                background: isUltra ? `${meta.color}` : isPerformance ? `${meta.color}` : `linear-gradient(150deg, ${meta.soft}, ${meta.color})`,
                 borderColor: isActiveYard ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.88)',
-                boxShadow: lowPerformanceMode
-                  ? (isActiveYard ? '0 0 0 2px rgba(255,255,255,0.2)' : 'none')
+                boxShadow: isUltra
+                  ? (isActiveYard ? '0 0 0 2px rgba(255,255,255,0.28)' : 'none')
+                  : isPerformance
+                    ? (isActiveYard ? '0 0 0 2px rgba(255,255,255,0.2)' : 'none')
                   : isActiveYard
                     ? `inset 0 0 0 1px rgba(255,255,255,0.28), inset 0 16px 28px rgba(255,255,255,0.2), 0 0 0 4px rgba(255,255,255,0.2), 0 0 24px ${meta.tokenShadow}, 0 0 48px ${meta.tokenShadow}`
                     : `inset 0 0 0 1px rgba(255,255,255,0.18), inset 0 10px 18px rgba(255,255,255,0.12), 0 8px 18px rgba(15,23,42,0.06)`,
                 opacity: isEnabled ? 1 : 0.45,
-                filter: lowPerformanceMode ? 'none' : isActiveYard ? 'brightness(1.1) saturate(1.08)' : 'brightness(0.94)',
+                filter: isPerformance ? 'none' : isActiveYard ? 'brightness(1.1) saturate(1.08)' : 'brightness(0.94)',
               }}
             >
               {isActiveYard ? (
                 <>
-                  <div className={`absolute inset-[1.5%] rounded-[1.3rem] border-2 ${lowPerformanceMode ? 'border-white/40' : 'border-white/65 shadow-[0_0_18px_rgba(255,255,255,0.32)]'}`} />
-                  <div className={`absolute left-1/2 top-[4%] z-[2] -translate-x-1/2 rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.28em] text-slate-900 ${lowPerformanceMode ? 'border-white/60 bg-white px-2 py-0.5 shadow-none' : 'border-white/70 bg-white/90 shadow-[0_8px_20px_rgba(15,23,42,0.2)]'}`}>
+                  <div className={`absolute inset-[1.5%] rounded-[1.3rem] border-2 ${isUltra ? 'border-white/50' : isPerformance ? 'border-white/40' : 'border-white/65 shadow-[0_0_18px_rgba(255,255,255,0.32)]'}`} />
+                  <div className={`absolute left-1/2 top-[4%] z-[2] -translate-x-1/2 rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.28em] text-slate-900 ${isUltra ? 'border-white/70 bg-white px-2 py-0.5 shadow-none' : isPerformance ? 'border-white/60 bg-white px-2 py-0.5 shadow-none' : 'border-white/70 bg-white/90 shadow-[0_8px_20px_rgba(15,23,42,0.2)]'}`}>
                     Active
                   </div>
                 </>
               ) : null}
-              <div className="absolute inset-[3%] rounded-[1.2rem] border border-white/30 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
-              <div className="absolute left-1/2 top-[5%] h-[90%] w-[4px] -translate-x-1/2 rounded-full bg-white/55 shadow-[0_0_10px_rgba(255,255,255,0.18)]" />
-              <div className="absolute left-[5%] top-1/2 h-[4px] w-[90%] -translate-y-1/2 rounded-full bg-white/55 shadow-[0_0_10px_rgba(255,255,255,0.18)]" />
+              {isUltra ? null : <div className="absolute inset-[3%] rounded-[1.2rem] border border-white/30 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />}
+              <div className={`absolute left-1/2 top-[5%] h-[90%] w-[4px] -translate-x-1/2 rounded-full ${isUltra ? 'bg-white/70 shadow-none' : 'bg-white/55 shadow-[0_0_10px_rgba(255,255,255,0.18)]'}`} />
+              <div className={`absolute left-[5%] top-1/2 h-[4px] w-[90%] -translate-y-1/2 rounded-full ${isUltra ? 'bg-white/70 shadow-none' : 'bg-white/55 shadow-[0_0_10px_rgba(255,255,255,0.18)]'}`} />
               <div className="absolute inset-[6%] grid grid-cols-2 grid-rows-2 gap-[6%]">
                 {slots.map((_, index) => (
-                  <div key={`${player}-slot-${index}`} className={`relative overflow-hidden rounded-[1rem] border ${lowPerformanceMode ? 'border-white/20 bg-white/10 shadow-none' : 'border-white/26 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.06))] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]'}`}>
-                    <div className="absolute inset-[10%] rounded-[0.8rem] bg-black/5" />
-                    <div className="absolute inset-[16%] rounded-[0.75rem] border border-white/20 bg-white/10" />
+                  <div key={`${player}-slot-${index}`} className={`relative overflow-hidden rounded-[1rem] border ${isUltra ? 'border-white/35 bg-white/14 shadow-none' : isPerformance ? 'border-white/20 bg-white/10 shadow-none' : 'border-white/26 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.06))] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]'}`}>
+                    {isUltra ? null : <div className="absolute inset-[10%] rounded-[0.8rem] bg-black/5" />}
+                    <div className={`absolute inset-[16%] rounded-[0.75rem] border ${isUltra ? 'border-white/15 bg-white/6' : 'border-white/20 bg-white/10'}`} />
                     <div
                       className="absolute inset-[31%] rounded-full border-2"
                       style={{
                         borderColor: isActiveYard ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.56)',
-                        background: 'rgba(255,255,255,0.18)',
-                        boxShadow: isActiveYard
+                        background: isUltra ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.18)',
+                        boxShadow: isUltra ? 'none' : isActiveYard
                           ? 'inset 0 2px 8px rgba(255,255,255,0.18), 0 0 12px rgba(255,255,255,0.12)'
                           : 'inset 0 2px 6px rgba(255,255,255,0.12)',
                       }}
@@ -412,7 +420,7 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayer
                   </div>
                 ))}
               </div>
-              <div className="absolute left-1/2 top-1/2 h-[13%] w-[13%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/35 bg-white/18 shadow-[inset_0_2px_8px_rgba(255,255,255,0.14)]" />
+              {isUltra ? null : <div className="absolute left-1/2 top-1/2 h-[13%] w-[13%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/35 bg-white/18 shadow-[inset_0_2px_8px_rgba(255,255,255,0.14)]" />}
             </div>
           );
         })}
@@ -458,7 +466,7 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayer
             offset={offset}
             selectable={selectableTokenIds.includes(token.id)}
             compactMode={compactMode}
-            lowPerformanceMode={lowPerformanceMode}
+            performanceMode={performanceMode}
             onTokenSelect={onTokenSelect}
             onStepSound={onStepSound}
           />

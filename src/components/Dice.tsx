@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
+import { PerformanceMode } from '../types/game';
 
 type DiceProps = {
   value: number | null;
@@ -10,7 +11,7 @@ type DiceProps = {
   minimalFullscreen?: boolean;
   draggableFullscreen?: boolean;
   mobileViewport?: boolean;
-  performanceMode?: boolean;
+  performanceMode?: PerformanceMode;
   dragOffset?: { x: number; y: number };
   onFullscreenDragMove?: (offset: { x: number; y: number }) => void;
   onRoll: () => void;
@@ -45,13 +46,15 @@ function FullscreenManualDice({
   disabled: boolean;
   draggableFullscreen: boolean;
   mobileViewport?: boolean;
-  performanceMode?: boolean;
+  performanceMode?: PerformanceMode;
   dragOffset: { x: number; y: number };
   onFullscreenDragMove?: (offset: { x: number; y: number }) => void;
   onManualSubmit: (value: number) => void;
 }) {
   const [manualPickerOpen, setManualPickerOpen] = useState(false);
   const [liveOffset, setLiveOffset] = useState(dragOffset);
+  const isPerformance = performanceMode !== 'off';
+  const isUltra = performanceMode === 'ultra';
 
   useEffect(() => {
     setLiveOffset(dragOffset);
@@ -96,7 +99,7 @@ function FullscreenManualDice({
             }
           }}
           aria-disabled={disabled}
-          className={`relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border p-2.5 sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3 ${performanceMode ? 'border-slate-300 bg-white shadow-[0_4px_10px_rgba(15,23,42,0.12)]' : 'border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 shadow-xl'} ${disabled ? 'opacity-80' : ''}`}
+          className={`relative grid shrink-0 grid-cols-3 grid-rows-3 border ${isUltra && mobileViewport ? 'h-14 w-14 rounded-[0.95rem] p-2' : 'h-16 w-16 rounded-[1.1rem] p-2.5 sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3'} ${isUltra ? 'border-slate-300 bg-white shadow-none' : isPerformance ? 'border-slate-300 bg-white shadow-[0_4px_10px_rgba(15,23,42,0.12)]' : 'border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 shadow-xl'} ${disabled ? 'opacity-80' : ''}`}
           aria-label="Choose manual dice value"
         >
           {pipMap[rolling ? displayValue : selectedManual].map(([row, col], index) => (
@@ -117,7 +120,7 @@ function FullscreenManualDice({
             className="absolute inset-0 bg-white/10 backdrop-blur-[3px]"
             onClick={() => setManualPickerOpen(false)}
           />
-          <div className={`relative z-10 grid w-[min(20rem,calc(100vw-2rem))] grid-cols-3 gap-2 rounded-[1.8rem] border p-3 sm:w-72 sm:gap-3 sm:p-4 ${performanceMode ? 'border-slate-300 bg-white shadow-[0_10px_20px_rgba(15,23,42,0.12)]' : 'border-white/55 bg-white/75 shadow-[0_24px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl'}`}>
+          <div className={`relative z-10 grid w-[min(20rem,calc(100vw-2rem))] grid-cols-3 gap-2 rounded-[1.8rem] border p-3 sm:w-72 sm:gap-3 sm:p-4 ${isUltra ? 'border-slate-300 bg-white shadow-none' : isPerformance ? 'border-slate-300 bg-white shadow-[0_10px_20px_rgba(15,23,42,0.12)]' : 'border-white/55 bg-white/75 shadow-[0_24px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl'}`}>
             {[1, 2, 3, 4, 5, 6].map((face) => (
               <button
                 key={face}
@@ -147,7 +150,7 @@ export function Dice({
   minimalFullscreen = false,
   draggableFullscreen = false,
   mobileViewport = false,
-  performanceMode = false,
+  performanceMode = 'off',
   dragOffset = { x: 0, y: 0 },
   onFullscreenDragMove,
   onRoll,
@@ -163,6 +166,9 @@ export function Dice({
     moved: boolean;
   } | null>(null);
 
+  const isPerformance = performanceMode !== 'off';
+  const isUltra = performanceMode === 'ultra';
+
   useEffect(() => {
     if (!rolling) {
       setDisplayValue(value ?? 1);
@@ -173,31 +179,41 @@ export function Dice({
     const interval = window.setInterval(() => {
       frame += 1;
       setDisplayValue(((frame % 6) + 1) as 1 | 2 | 3 | 4 | 5 | 6);
-    }, 95);
+    }, isUltra ? 130 : 95);
 
     return () => window.clearInterval(interval);
-  }, [rolling, value]);
+  }, [isUltra, rolling, value]);
 
   const standardShell = fullscreen
-    ? performanceMode
-      ? 'rounded-[1.4rem] border border-slate-300 bg-white p-3 text-slate-950 shadow-[0_8px_18px_rgba(15,23,42,0.12)]'
+    ? isUltra
+      ? 'rounded-[1.2rem] border border-slate-300 bg-white p-3 text-slate-950 shadow-none'
+      : isPerformance
+        ? 'rounded-[1.4rem] border border-slate-300 bg-white p-3 text-slate-950 shadow-[0_8px_18px_rgba(15,23,42,0.12)]'
       : 'rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(165deg,rgba(248,250,252,0.97),rgba(226,232,240,0.94)_54%,rgba(203,213,225,0.9)_100%)] p-3 text-slate-950 shadow-[0_16px_30px_rgba(15,23,42,0.22)] backdrop-blur-md'
-    : performanceMode
+    : isPerformance
       ? 'rounded-[2rem] border border-white/10 bg-slate-900/92 p-4 text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] sm:p-5'
       : 'rounded-[2rem] border border-amber-200/30 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.94))] p-4 text-white shadow-[0_18px_50px_rgba(15,23,42,0.35)] sm:p-5';
   const manualShell = fullscreen
-    ? performanceMode
-      ? 'rounded-[1.4rem] border border-slate-300 bg-white p-3 text-slate-950 shadow-[0_8px_18px_rgba(15,23,42,0.12)]'
+    ? isUltra
+      ? 'rounded-[1.2rem] border border-slate-300 bg-white p-3 text-slate-950 shadow-none'
+      : isPerformance
+        ? 'rounded-[1.4rem] border border-slate-300 bg-white p-3 text-slate-950 shadow-[0_8px_18px_rgba(15,23,42,0.12)]'
       : 'rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(165deg,rgba(248,250,252,0.97),rgba(226,232,240,0.94)_54%,rgba(203,213,225,0.9)_100%)] p-3 text-slate-950 shadow-[0_16px_30px_rgba(15,23,42,0.22)] backdrop-blur-md'
-    : performanceMode
+    : isPerformance
       ? 'rounded-[2rem] border border-white/10 bg-slate-900/92 p-4 text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] sm:p-5'
       : 'rounded-[2rem] border border-amber-200/30 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.94))] p-4 text-white shadow-[0_18px_50px_rgba(15,23,42,0.35)] sm:p-5';
   const standardDie = fullscreen
-    ? performanceMode
-      ? 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-300 bg-white p-2.5 shadow-[0_4px_10px_rgba(15,23,42,0.12)] sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3'
+    ? isUltra
+      ? mobileViewport
+        ? 'relative grid h-14 w-14 shrink-0 grid-cols-3 grid-rows-3 rounded-[0.95rem] border border-slate-300 bg-white p-2 shadow-none'
+        : 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1rem] border border-slate-300 bg-white p-2.5 shadow-none sm:h-20 sm:w-20 sm:p-3'
+      : isPerformance
+        ? 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-300 bg-white p-2.5 shadow-[0_4px_10px_rgba(15,23,42,0.12)] sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3'
       : 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-2.5 shadow-xl sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3'
-    : performanceMode
-      ? 'relative grid h-20 w-20 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.4rem] border border-slate-300 bg-white p-3 shadow-[0_6px_12px_rgba(15,23,42,0.14)] sm:h-24 sm:w-24 sm:p-4'
+    : isUltra
+      ? 'relative grid h-20 w-20 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.2rem] border border-slate-300 bg-white p-3 shadow-none sm:h-24 sm:w-24 sm:p-4'
+      : isPerformance
+        ? 'relative grid h-20 w-20 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.4rem] border border-slate-300 bg-white p-3 shadow-[0_6px_12px_rgba(15,23,42,0.14)] sm:h-24 sm:w-24 sm:p-4'
       : 'relative grid h-20 w-20 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.4rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-3 shadow-2xl sm:h-24 sm:w-24 sm:p-4';
   const pipClass = fullscreen
     ? 'm-auto h-2.5 w-2.5 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] sm:h-3 sm:w-3'
@@ -266,6 +282,7 @@ export function Dice({
         disabled={disabled}
         draggableFullscreen={draggableFullscreen}
         mobileViewport={mobileViewport}
+        performanceMode={performanceMode}
         dragOffset={dragOffset}
         onFullscreenDragMove={onFullscreenDragMove}
         onManualSubmit={(manualValue) => {
@@ -282,8 +299,8 @@ export function Dice({
         type="button"
         whileHover={{ scale: disabled ? 1 : 1.03 }}
         whileTap={{ scale: disabled ? 1 : 0.98 }}
-        animate={rolling ? { rotate: [0, 90, 180, 270, 360], scale: [1, 1.08, 0.95, 1.02, 1] } : { rotate: 0, scale: 1 }}
-        transition={{ duration: 0.9, ease: 'easeInOut' }}
+        animate={rolling && !isUltra ? { rotate: [0, 90, 180, 270, 360], scale: [1, 1.08, 0.95, 1.02, 1] } : { rotate: 0, scale: 1 }}
+        transition={isUltra ? { duration: 0.05 } : { duration: 0.9, ease: 'easeInOut' }}
         style={draggableFullscreen ? { x: dragOffset.x, y: dragOffset.y } : undefined}
         disabled={disabled}
         className={`${standardDie} ${draggableFullscreen ? 'cursor-grab active:cursor-grabbing touch-none' : ''} disabled:cursor-not-allowed disabled:opacity-80`}
@@ -362,8 +379,8 @@ export function Dice({
               type="button"
               whileHover={{ scale: disabled ? 1 : 1.03 }}
               whileTap={{ scale: disabled ? 1 : 0.98 }}
-              animate={rolling ? { rotate: [0, 90, 180, 270, 360], scale: [1, 1.08, 0.95, 1.02, 1] } : { rotate: 0, scale: 1 }}
-              transition={{ duration: 0.9, ease: 'easeInOut' }}
+              animate={rolling && !isUltra ? { rotate: [0, 90, 180, 270, 360], scale: [1, 1.08, 0.95, 1.02, 1] } : { rotate: 0, scale: 1 }}
+              transition={isUltra ? { duration: 0.05 } : { duration: 0.9, ease: 'easeInOut' }}
               onClick={onRoll}
               disabled={disabled}
               className={`${standardDie} disabled:cursor-not-allowed disabled:opacity-80`}
@@ -406,8 +423,8 @@ export function Dice({
               type="button"
               whileHover={{ scale: disabled ? 1 : 1.03 }}
               whileTap={{ scale: disabled ? 1 : 0.98 }}
-              animate={rolling ? { rotate: [0, 90, 180, 270, 360], scale: [1, 1.08, 0.95, 1.02, 1] } : { rotate: 0, scale: 1 }}
-              transition={{ duration: 0.9, ease: 'easeInOut' }}
+              animate={rolling && !isUltra ? { rotate: [0, 90, 180, 270, 360], scale: [1, 1.08, 0.95, 1.02, 1] } : { rotate: 0, scale: 1 }}
+              transition={isUltra ? { duration: 0.05 } : { duration: 0.9, ease: 'easeInOut' }}
               onClick={onRoll}
               disabled={disabled}
               className={`${standardDie} disabled:cursor-not-allowed disabled:opacity-80`}

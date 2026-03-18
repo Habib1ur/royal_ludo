@@ -11,7 +11,9 @@ import {
   createUndoSnapshot,
   getCurrentPlayer,
   getNextTurnIndex,
+  isPerformanceModeOn,
   isPlayerEnabledForCount,
+  isUltraPerformanceMode,
   isWinningPlayer,
 } from '../utils/game';
 import { createId, delay, rollSecureDie } from '../utils/helpers';
@@ -50,10 +52,16 @@ const buildToast = (title: string, description: string, tone: ToastMessage['tone
   tone,
 });
 
-const getMoveAnimationDelay = (steps: number, performanceMode: boolean, capturedCount: number) => {
-  const perStep = performanceMode ? 280 : 400;
-  const base = performanceMode ? 380 : 560;
-  return base + steps * perStep + capturedCount * (performanceMode ? 650 : 1100);
+const getMoveAnimationDelay = (steps: number, performanceMode: GameOptions['performanceMode'], capturedCount: number) => {
+  if (performanceMode === 'ultra') {
+    return 180 + steps * 110 + capturedCount * 220;
+  }
+
+  if (performanceMode === 'basic') {
+    return 380 + steps * 280 + capturedCount * 650;
+  }
+
+  return 560 + steps * 400 + capturedCount * 1100;
 };
 
 const resolveDiceValue = async (setState: any, getState: any, diceValue: number, source: 'roll' | 'manual') => {
@@ -111,10 +119,10 @@ const resolveDiceValue = async (setState: any, getState: any, diceValue: number,
   });
 
   if (selectableTokenIds.length === 0) {
-    await delay(activeState.options.performanceMode ? 700 : 1150);
+    await delay(activeState.options.performanceMode === 'ultra' ? 320 : activeState.options.performanceMode === 'basic' ? 700 : 1150);
     getState().advanceTurn();
   } else if (selectableTokenIds.length === 1 && activeState.options.autoMoveSingle) {
-    await delay(activeState.options.performanceMode ? 1400 : 1900);
+    await delay(activeState.options.performanceMode === 'ultra' ? 520 : activeState.options.performanceMode === 'basic' ? 1400 : 1900);
     const latest = getState();
     if (latest.phase === 'playing' && latest.diceValue !== null && latest.selectableTokenIds.includes(selectableTokenIds[0])) {
       await latest.moveToken(selectableTokenIds[0]);
@@ -195,7 +203,7 @@ export const useGameStore = create<GameState & GameActions>()(
           diceRolling: true,
           undoStack: [...current.undoStack, createUndoSnapshot(current)].slice(-20),
         }));
-        await delay(state.options.performanceMode ? 540 : 980);
+        await delay(state.options.performanceMode === 'ultra' ? 760 : state.options.performanceMode === 'basic' ? 540 : 980);
 
         const diceValue = rollSecureDie();
         await resolveDiceValue(set, get, diceValue, 'roll');
@@ -215,7 +223,7 @@ export const useGameStore = create<GameState & GameActions>()(
           diceRolling: true,
           undoStack: [...current.undoStack, createUndoSnapshot(current)].slice(-20),
         }));
-        await delay(state.options.performanceMode ? 720 : 1050);
+        await delay(state.options.performanceMode === 'ultra' ? 820 : state.options.performanceMode === 'basic' ? 720 : 1050);
         await resolveDiceValue(set, get, value, 'manual');
       },
 
@@ -323,7 +331,7 @@ export const useGameStore = create<GameState & GameActions>()(
             lastActionAt: Date.now(),
           }));
 
-          await delay(state.options.performanceMode ? 220 : 380);
+          await delay(state.options.performanceMode === 'ultra' ? 120 : state.options.performanceMode === 'basic' ? 220 : 380);
         }
 
         if (won) {
@@ -490,7 +498,7 @@ export const useGameStore = create<GameState & GameActions>()(
         if (!state.options) {
           state.options = state.lobby?.options ?? {
             autoMoveSingle: true,
-            performanceMode: false,
+            performanceMode: 'off',
             showHints: true,
             turnTimerSeconds: 0,
             soundsEnabled: true,

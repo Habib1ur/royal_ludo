@@ -67,9 +67,28 @@ export function StartScreen({
                 <p className="text-sm font-semibold text-white">Auto move</p>
                 <p className="mt-1 text-sm text-slate-300">Move the only legal pawn automatically.</p>
               </button>
-              <button type="button" onClick={() => onOptionsChange({ performanceMode: !options.performanceMode })} className={`rounded-[1.3rem] border px-4 py-4 text-left transition ${options.performanceMode ? 'border-white/30 bg-white/15' : 'border-white/10 bg-white/5'}`}>
+              <button
+                type="button"
+                onClick={() =>
+                  onOptionsChange({
+                    performanceMode:
+                      options.performanceMode === 'off'
+                        ? 'basic'
+                        : options.performanceMode === 'basic'
+                          ? 'ultra'
+                          : 'off',
+                  })
+                }
+                className={`rounded-[1.3rem] border px-4 py-4 text-left transition ${options.performanceMode !== 'off' ? 'border-white/30 bg-white/15' : 'border-white/10 bg-white/5'}`}
+              >
                 <p className="text-sm font-semibold text-white">Performance mode</p>
-                <p className="mt-1 text-sm text-slate-300">Use lighter effects and reduced animation work for smoother phones.</p>
+                <p className="mt-1 text-sm text-slate-300">
+                  {options.performanceMode === 'off'
+                    ? 'Off. Keeps the full visual experience.'
+                    : options.performanceMode === 'basic'
+                      ? 'Performance mode. Lighter effects and simpler surfaces.'
+                      : 'Performance mode 2. Flat ultra-light UI for weaker devices.'}
+                </p>
               </button>
               <button type="button" onClick={() => onOptionsChange({ showHints: !options.showHints })} className={`rounded-[1.3rem] border px-4 py-4 text-left transition ${options.showHints ? 'border-white/30 bg-white/15' : 'border-white/10 bg-white/5'}`}>
                 <p className="text-sm font-semibold text-white">Move hints</p>

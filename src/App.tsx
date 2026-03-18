@@ -9,7 +9,6 @@ import { PlayerPanel } from './components/PlayerPanel';
 import { RulesDialog } from './components/RulesDialog';
 import { StartScreen } from './components/StartScreen';
 import { StatsPanel } from './components/StatsPanel';
-import { ToastStack } from './components/ToastStack';
 import { WinnerDialog } from './components/WinnerDialog';
 import { PLAYER_ORDER } from './constants/players';
 import { useSoundHooks } from './hooks/useSoundHooks';
@@ -69,6 +68,8 @@ function App() {
   const [timerRemaining, setTimerRemaining] = useState<number>(options.turnTimerSeconds);
   const enabledPlayers = players.filter((player) => player.enabled);
   const currentPlayer = enabledPlayers[currentTurnIndex];
+  const isPerformance = options.performanceMode !== 'off';
+  const isUltraPerformance = options.performanceMode === 'ultra';
   const playersEnabledMap = Object.fromEntries(players.map((player) => [player.color, player.enabled])) as Record<
     typeof players[number]['color'],
     boolean
@@ -134,20 +135,25 @@ function App() {
     }
   }, [winner]);
 
-
   useEffect(() => {
+    if (isUltraPerformance) {
+      setDiceDragOffset({ x: 0, y: 0 });
+      return;
+    }
+
     setDiceDragOffset({ x: 0, y: 0 });
-  }, [currentPlayer?.color, isFullscreen]);
+  }, [currentPlayer?.color, isFullscreen, isUltraPerformance]);
 
   useEffect(() => {
-    if (!isFullscreen || phase !== 'playing') {
+    if (isUltraPerformance || !isFullscreen || phase !== 'playing') {
       return;
     }
 
     if (!diceRolling && diceValue === null) {
       setDiceDragOffset({ x: 0, y: 0 });
     }
-  }, [diceRolling, diceValue, isFullscreen, phase, currentTurnIndex, currentPlayer?.color]);
+  }, [diceRolling, diceValue, isFullscreen, phase, currentTurnIndex, currentPlayer?.color, isUltraPerformance]);
+
 
   const toggleFullscreen = async () => {
     if (!boardViewportRef.current) return;
@@ -160,24 +166,41 @@ function App() {
 
   const fullscreenDiceAnchor = (() => {
     const dieSize = isMobileViewport ? 64 : 80;
+    const half = dieSize / 2;
+
+    if (isUltraPerformance) {
+      switch (currentPlayer?.color) {
+        case 'red':
+          return { left: `calc(20% - ${half}px)`, top: `calc(7.5% - ${half}px)` };
+        case 'green':
+          return { left: `calc(80% - ${half}px)`, top: `calc(7.5% - ${half}px)` };
+        case 'yellow':
+          return { left: `calc(80% - ${half}px)`, top: `calc(92.5% - ${half}px)` };
+        case 'blue':
+          return { left: `calc(20% - ${half}px)`, top: `calc(92.5% - ${half}px)` };
+        default:
+          return { left: `calc(20% - ${half}px)`, top: `calc(7.5% - ${half}px)` };
+      }
+    }
+
     switch (currentPlayer?.color) {
       case 'red':
-        return { left: `calc(20% - ${dieSize / 2}px)`, top: `calc(20% - ${dieSize / 2}px)` };
+        return { left: `calc(20% - ${half}px)`, top: `calc(20% - ${half}px)` };
       case 'green':
-        return { left: `calc(80% - ${dieSize / 2}px)`, top: `calc(20% - ${dieSize / 2}px)` };
+        return { left: `calc(80% - ${half}px)`, top: `calc(20% - ${half}px)` };
       case 'yellow':
-        return { left: `calc(80% - ${dieSize / 2}px)`, top: `calc(80% - ${dieSize / 2}px)` };
+        return { left: `calc(80% - ${half}px)`, top: `calc(80% - ${half}px)` };
       case 'blue':
-        return { left: `calc(20% - ${dieSize / 2}px)`, top: `calc(80% - ${dieSize / 2}px)` };
+        return { left: `calc(20% - ${half}px)`, top: `calc(80% - ${half}px)` };
       default:
-        return { left: `calc(20% - ${dieSize / 2}px)`, top: `calc(20% - ${dieSize / 2}px)` };
+        return { left: `calc(20% - ${half}px)`, top: `calc(20% - ${half}px)` };
     }
   })();
 
   const clampDiceOffset = (offset: { x: number; y: number }) => {
     const boardEl = boardViewportRef.current;
-    if (!boardEl) {
-      return offset;
+    if (!boardEl || isUltraPerformance) {
+      return isUltraPerformance ? { x: 0, y: 0 } : offset;
     }
 
     const rect = boardEl.getBoundingClientRect();
@@ -325,14 +348,13 @@ function App() {
           onResume={resumeSavedGame}
           onClearSaved={clearSavedGame}
         />
-        <ToastStack toasts={notifications} onDismiss={dismissToast} />
       </>
     );
   }
 
   return (
     <div
-      className={`${options.performanceMode ? 'performance-ui ' : ''}${options.performanceMode && isMobileViewport ? 'mobile-performance ' : ''}min-h-screen overflow-hidden transition-colors ${
+      className={`${isPerformance ? 'performance-ui ' : ''}${isUltraPerformance ? 'performance-ui-2 ' : ''}${isPerformance && isMobileViewport ? 'mobile-performance ' : ''}min-h-screen overflow-hidden transition-colors ${
         theme === 'dark'
           ? 'bg-[radial-gradient(circle_at_top,#17326f_0%,#08101d_40%,#030712_100%)] text-white'
           : 'bg-[radial-gradient(circle_at_top,#f8fbff_0%,#dbeafe_38%,#eff6ff_100%)] text-slate-950'
@@ -342,7 +364,7 @@ function App() {
 
       <div className="relative flex min-h-screen flex-col p-2 sm:p-4 lg:p-5">
         {!isFullscreen ? (
-          <header className={`mb-2 flex flex-wrap items-center justify-between gap-2 rounded-[1.4rem] border border-white/15 bg-white/10 px-3 py-3 shadow-glass ${options.performanceMode ? '' : 'backdrop-blur-xl'} sm:mb-3 sm:gap-3 sm:rounded-[1.8rem] sm:px-4`}>
+          <header className={`mb-2 flex flex-wrap items-center justify-between gap-2 rounded-[1.4rem] border border-white/15 bg-white/10 px-3 py-3 shadow-glass ${isPerformance ? '' : 'backdrop-blur-xl'} sm:mb-3 sm:gap-3 sm:rounded-[1.8rem] sm:px-4`}>
             <div>
               <p className="text-[10px] uppercase tracking-[0.35em] text-slate-300 sm:text-xs">Royal Ludo</p>
               <h1 className="font-display text-lg font-bold sm:text-2xl">Board match</h1>
@@ -380,16 +402,16 @@ function App() {
           {!isFullscreen ? (
             <aside className="hidden xl:grid xl:auto-rows-max xl:gap-3">
               <div className="relative z-30">
-                <Dice value={diceValue} rolling={diceRolling} disabled={diceRolling || diceValue !== null || phase === 'finished' || currentPlayer?.kind === 'ai'} manualMode={options.manualDiceInput && currentPlayer?.kind !== 'ai'} onRoll={handleRoll} onManualSubmit={useManualDice} />
+                <Dice value={diceValue} rolling={diceRolling} disabled={diceRolling || diceValue !== null || phase === 'finished' || currentPlayer?.kind === 'ai'} manualMode={options.manualDiceInput && currentPlayer?.kind !== 'ai'} performanceMode={options.performanceMode} onRoll={handleRoll} onManualSubmit={useManualDice} />
               </div>
             </aside>
           ) : null}
 
           <section className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-2 sm:gap-3">
-            <div ref={boardViewportRef} className={`relative min-h-0 rounded-[1.6rem] border border-white/15 bg-white/8 p-2 shadow-glass ${options.performanceMode && !isFullscreen ? '' : 'backdrop-blur-xl'} sm:rounded-[2.2rem] sm:p-3 ${isFullscreen ? 'h-screen w-screen overflow-hidden rounded-none border-0 bg-[radial-gradient(circle_at_top,#17326f_0%,#08101d_46%,#030712_100%)] p-2 sm:p-3' : ''}`}>
+            <div ref={boardViewportRef} className={`relative min-h-0 rounded-[1.6rem] border border-white/15 bg-white/8 p-2 shadow-glass ${isPerformance && !isFullscreen ? '' : 'backdrop-blur-xl'} sm:rounded-[2.2rem] sm:p-3 ${isFullscreen ? 'h-screen w-screen overflow-hidden rounded-none border-0 bg-[radial-gradient(circle_at_top,#17326f_0%,#08101d_46%,#030712_100%)] p-2 sm:p-3' : ''}`}>
               <div className={`mx-auto h-full overflow-auto ${isFullscreen ? 'w-full max-w-none touch-pan-x touch-pan-y' : 'min-h-[22rem] w-full max-w-[min(98vw,1120px)] sm:min-h-[26rem] xl:max-h-[calc(100vh-11rem)]'}`}>
                 <div className="flex h-full min-w-max items-center justify-center transition-transform duration-200" style={{ transform: `scale(${boardScale})`, transformOrigin: 'center center' }}>
-                  <Board tokens={tokens} playersEnabled={playersEnabledMap} selectableTokenIds={options.showHints ? selectableTokenIds : []} activePlayerColor={currentPlayer?.color} onTokenSelect={handleMoveToken} onStepSound={sounds.playStep} compactMode={!isFullscreen} lowPerformanceMode={options.performanceMode} />
+                  <Board tokens={tokens} playersEnabled={playersEnabledMap} selectableTokenIds={options.showHints ? selectableTokenIds : []} activePlayerColor={currentPlayer?.color} onTokenSelect={handleMoveToken} onStepSound={sounds.playStep} compactMode={!isFullscreen} performanceMode={options.performanceMode} />
                 </div>
               </div>
 
@@ -405,15 +427,29 @@ function App() {
               </button>
 
               {isFullscreen ? (
-                <div className="absolute z-50" style={{ left: fullscreenDiceAnchor.left, top: fullscreenDiceAnchor.top }}>
+                <div
+                  className="absolute z-50"
+                  style={{
+                    left: fullscreenDiceAnchor.left,
+                    top: fullscreenDiceAnchor.top,
+                    pointerEvents:
+                      isUltraPerformance &&
+                      isMobileViewport &&
+                      diceValue === 6 &&
+                      selectableTokenIds.length > 0
+                        ? 'none'
+                        : 'auto',
+                  }}
+                >
                   <Dice
                     value={diceValue}
                     rolling={diceRolling}
                     disabled={diceRolling || diceValue !== null || phase === 'finished' || currentPlayer?.kind === 'ai'}
                     manualMode={options.manualDiceInput && currentPlayer?.kind !== 'ai'}
+                    performanceMode={options.performanceMode}
                     fullscreen
                     minimalFullscreen
-                    draggableFullscreen={currentPlayer?.kind !== 'ai'}
+                    draggableFullscreen={!isUltraPerformance && currentPlayer?.kind !== 'ai'}
                     mobileViewport={isMobileViewport}
                     dragOffset={diceDragOffset}
                     onFullscreenDragMove={(offset: { x: number; y: number }) =>
@@ -429,7 +465,7 @@ function App() {
             {!isFullscreen ? (
               <div className="grid gap-2 sm:gap-3">
                 <div className="relative z-30 xl:hidden">
-                  <Dice value={diceValue} rolling={diceRolling} disabled={diceRolling || diceValue !== null || phase === 'finished' || currentPlayer?.kind === 'ai'} manualMode={options.manualDiceInput && currentPlayer?.kind !== 'ai'} onRoll={handleRoll} onManualSubmit={useManualDice} />
+                  <Dice value={diceValue} rolling={diceRolling} disabled={diceRolling || diceValue !== null || phase === 'finished' || currentPlayer?.kind === 'ai'} manualMode={options.manualDiceInput && currentPlayer?.kind !== 'ai'} performanceMode={options.performanceMode} onRoll={handleRoll} onManualSubmit={useManualDice} />
                 </div>
                 <div className="grid gap-2 sm:gap-3 xl:-ml-[18rem] xl:w-[calc(100%+18rem)] xl:grid-cols-[minmax(16rem,0.9fr)_minmax(22rem,1.1fr)]">
                   <ControlPanel
@@ -451,12 +487,12 @@ function App() {
                   <StatsPanel stats={stats} players={players} performanceMode={options.performanceMode} />
                 </div>
                 <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_20rem] sm:gap-3 xl:grid-cols-1">
-                  <div className={`rounded-[2rem] border border-white/15 bg-white/10 p-4 shadow-glass ${options.performanceMode ? '' : 'backdrop-blur-xl'}`}>
+                  <div className={`rounded-[2rem] border border-white/15 bg-white/10 p-4 shadow-glass ${isPerformance ? '' : 'backdrop-blur-xl'}`}>
                     <div className="mb-3 flex items-center gap-2 text-white">
                       <History className="h-4 w-4" />
                       <p className="font-display text-lg font-semibold">Recent history</p>
                     </div>
-                    <MoveHistory entries={moveHistory.slice(0, options.performanceMode ? 5 : 8)} performanceMode={options.performanceMode} />
+                    <MoveHistory entries={moveHistory.slice(0, isUltraPerformance ? 3 : isPerformance ? 5 : 8)} performanceMode={options.performanceMode} />
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2 xl:hidden xl:gap-3">
                     {PLAYER_ORDER.map((playerColor) => {
@@ -485,16 +521,18 @@ function App() {
         Current match progress will be replaced. Your saved game remains available until you clear it.
       </Modal>
       <WinnerDialog winner={winner} open={winner !== null} onReplay={() => startGame({ playerCount: lobby.playerCount, players: lobby.players, options: lobby.options })} onLobby={resetToLobby} />
-      <ToastStack toasts={notifications} onDismiss={dismissToast} />
     </div>
   );
 }
 
-const latestDelay = (performanceMode: boolean, kind: 'human' | 'ai') => {
+const latestDelay = (performanceMode: 'off' | 'basic' | 'ultra', kind: 'human' | 'ai') => {
   if (kind === 'human') {
     return 0;
   }
-  return performanceMode ? 520 : 900;
+  if (performanceMode === 'ultra') {
+    return 260;
+  }
+  return performanceMode === 'basic' ? 520 : 900;
 };
 
 export default App;
