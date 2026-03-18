@@ -47,15 +47,6 @@ export type MoveHistoryEntry = {
   timestamp: number;
 };
 
-export type NotificationTone = 'info' | 'success' | 'warning';
-
-export type ToastMessage = {
-  id: string;
-  title: string;
-  description: string;
-  tone: NotificationTone;
-};
-
 export type PlayerStats = {
   turns: number;
   rolls: number;
@@ -100,7 +91,6 @@ export type GameState = {
   selectableTokenIds: string[];
   winner: PlayerColor | null;
   moveHistory: MoveHistoryEntry[];
-  notifications: ToastMessage[];
   showRules: boolean;
   showResetConfirm: boolean;
   pendingExtraTurn: boolean;

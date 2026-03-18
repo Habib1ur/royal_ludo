@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { FINAL_PROGRESS } from '../constants/board';
 import { DEFAULT_PLAYERS } from '../constants/players';
-import { GameOptions, GameState, PlayerColor, PlayerConfig, ToastMessage } from '../types/game';
+import { GameOptions, GameState, PlayerColor, PlayerConfig } from '../types/game';
 import { canMoveToken, getCaptureCandidates } from '../utils/board';
 import {
   createHistoryEntry,
@@ -11,12 +11,10 @@ import {
   createUndoSnapshot,
   getCurrentPlayer,
   getNextTurnIndex,
-  isPerformanceModeOn,
   isPlayerEnabledForCount,
-  isUltraPerformanceMode,
   isWinningPlayer,
 } from '../utils/game';
-import { createId, delay, rollSecureDie } from '../utils/helpers';
+import { delay, rollSecureDie } from '../utils/helpers';
 
 type StartPayload = {
   playerCount: 2 | 3 | 4;
@@ -34,7 +32,6 @@ type GameActions = {
   moveToken: (tokenId: string) => Promise<void>;
   advanceTurn: (reason?: 'extra-turn') => void;
   undoLastTurn: () => void;
-  dismissToast: (id: string) => void;
   openRules: () => void;
   closeRules: () => void;
   openResetConfirm: () => void;
@@ -44,13 +41,6 @@ type GameActions = {
   resumeSavedGame: () => void;
   setTheme: (theme: 'dark' | 'light') => void;
 };
-
-const buildToast = (title: string, description: string, tone: ToastMessage['tone']): ToastMessage => ({
-  id: createId('toast'),
-  title,
-  description,
-  tone,
-});
 
 const getMoveAnimationDelay = (steps: number, performanceMode: GameOptions['performanceMode'], capturedCount: number) => {
   if (performanceMode === 'ultra') {
@@ -85,7 +75,6 @@ const resolveDiceValue = async (setState: any, getState: any, diceValue: number,
       ...current.moveHistory,
     ];
 
-    const nextToasts = [...current.notifications];
     if (selectableTokenIds.length === 0) {
       nextHistory.unshift(
         createHistoryEntry(
@@ -96,7 +85,6 @@ const resolveDiceValue = async (setState: any, getState: any, diceValue: number,
           diceValue,
         ),
       );
-      nextToasts.unshift(buildToast('No legal move', `${currentPlayer.name} passes automatically.`, 'warning'));
     }
 
     return {
@@ -105,7 +93,6 @@ const resolveDiceValue = async (setState: any, getState: any, diceValue: number,
       diceValue,
       selectableTokenIds,
       moveHistory: nextHistory,
-      notifications: nextToasts,
       stats: {
         ...current.stats,
         [currentPlayer.color]: {
@@ -313,14 +300,6 @@ export const useGameStore = create<GameState & GameActions>()(
               ),
               ...current.moveHistory,
             ],
-            notifications: [
-              buildToast(
-                'Capture',
-                `${currentPlayer.name} sent ${capturedTokens.length} token${capturedTokens.length > 1 ? 's' : ''} home.`,
-                'success',
-              ),
-              ...current.notifications,
-            ],
             stats: {
               ...current.stats,
               [currentPlayer.color]: {
@@ -349,7 +328,6 @@ export const useGameStore = create<GameState & GameActions>()(
               ),
               ...current.moveHistory,
             ],
-            notifications: [buildToast('Winner', `${currentPlayer.name} owns the board.`, 'success'), ...current.notifications],
             stats: {
               ...current.stats,
               [currentPlayer.color]: {
@@ -363,10 +341,20 @@ export const useGameStore = create<GameState & GameActions>()(
         }
 
         if (extraTurn) {
+          const extraTurnMessage =
+            movedBy === 6
+              ? `${currentPlayer.name} rolled a 6 and goes again.`
+              : capturedTokens.length > 0
+                ? `${currentPlayer.name} captured a token and goes again.`
+                : `${currentPlayer.name} reached home and goes again.`;
+
           set((current) => ({
             ...current,
             pendingExtraTurn: true,
-            notifications: [buildToast('Extra turn', `${currentPlayer.name} rolled a 6 and goes again.`, 'info'), ...current.notifications],
+            moveHistory: [
+              createHistoryEntry(currentPlayer.color, current.turnCount, 'timer', extraTurnMessage),
+              ...current.moveHistory,
+            ],
             lastActionAt: Date.now(),
           }));
         }
@@ -426,7 +414,6 @@ export const useGameStore = create<GameState & GameActions>()(
           return {
             ...state,
             ...snapshot,
-            notifications: [buildToast('Undo', 'Reverted the last turn.', 'info'), ...state.notifications],
             undoStack: state.undoStack.slice(0, -1),
             diceRolling: false,
             showRules: false,
@@ -434,11 +421,6 @@ export const useGameStore = create<GameState & GameActions>()(
             lastActionAt: Date.now(),
           };
         }),
-
-      dismissToast: (id) =>
-        set((state) => ({
-          notifications: state.notifications.filter((toast) => toast.id !== id),
-        })),
 
       openRules: () => set({ showRules: true }),
       closeRules: () => set({ showRules: false }),
@@ -473,7 +455,6 @@ export const useGameStore = create<GameState & GameActions>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         ...state,
-        notifications: [],
         diceRolling: false,
         showRules: false,
         showResetConfirm: false,

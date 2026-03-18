@@ -20,6 +20,7 @@ type BoardProps = {
   tokens: Token[];
   playersEnabled: Record<PlayerColor, boolean>;
   selectableTokenIds: string[];
+  showHints?: boolean;
   activePlayerColor?: PlayerColor;
   onTokenSelect: (tokenId: string) => void;
   onStepSound?: () => void;
@@ -197,6 +198,7 @@ const PawnToken = memo(function PawnToken({
   targetCoord,
   offset,
   selectable,
+  showSelectableHint,
   compactMode,
   performanceMode,
   onTokenSelect,
@@ -206,6 +208,7 @@ const PawnToken = memo(function PawnToken({
   targetCoord: BoardCoordinate;
   offset: { x: number; y: number };
   selectable: boolean;
+  showSelectableHint: boolean;
   compactMode: boolean;
   performanceMode: PerformanceMode;
   onTokenSelect: (tokenId: string) => void;
@@ -221,7 +224,7 @@ const PawnToken = memo(function PawnToken({
   const isPerformance = performanceMode !== 'off';
   const isUltra = performanceMode === 'ultra';
   const selectLift = isUltra ? (compactMode ? 1.5 : 2) : isPerformance ? (compactMode ? 2 : 3) : compactMode ? 6 : 10;
-  const animatedSelectable = selectable;
+  const animatedSelectable = selectable && showSelectableHint;
   const controls = useAnimationControls();
   const previousTokenRef = useRef<Token | undefined>(undefined);
   const currentCoordRef = useRef<BoardCoordinate>(targetCoord);
@@ -306,7 +309,7 @@ const PawnToken = memo(function PawnToken({
   );
 });
 
-export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayerColor, onTokenSelect, onStepSound, compactMode = false, performanceMode = 'off' }: BoardProps) {
+export function Board({ tokens, playersEnabled, selectableTokenIds, showHints = true, activePlayerColor, onTokenSelect, onStepSound, compactMode = false, performanceMode = 'off' }: BoardProps) {
   const visibleTokens = useMemo(() => tokens.filter((token) => playersEnabled[token.owner]), [tokens, playersEnabled]);
   const tokenOffsets = compactMode ? tokenOffsetsCompact : tokenOffsetsRegular;
   const isPerformance = performanceMode !== 'off';
@@ -466,6 +469,7 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayer
             targetCoord={coord}
             offset={offset}
             selectable={selectableTokenIds.includes(token.id)}
+            showSelectableHint={showHints}
             compactMode={compactMode}
             performanceMode={performanceMode}
             onTokenSelect={onTokenSelect}

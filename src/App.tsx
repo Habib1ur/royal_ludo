@@ -16,6 +16,8 @@ import { useGameStore } from './store/useGameStore';
 import { Token } from './types/game';
 import { getCaptureCandidates } from './utils/board';
 
+const MOBILE_TABLET_MEDIA_QUERY = '(max-width: 1024px)';
+
 function App() {
   const {
     phase,
@@ -29,7 +31,6 @@ function App() {
     selectableTokenIds,
     winner,
     moveHistory,
-    notifications,
     showRules,
     showResetConfirm,
     canResumeSavedGame,
@@ -48,7 +49,6 @@ function App() {
     moveToken,
     advanceTurn,
     undoLastTurn,
-    dismissToast,
     openRules,
     closeRules,
     openResetConfirm,
@@ -75,8 +75,6 @@ function App() {
     boolean
   >;
 
-
-
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -100,8 +98,8 @@ function App() {
       const active = document.fullscreenElement === boardViewportRef.current;
       setIsFullscreen(active);
 
-      const isMobile = window.matchMedia('(max-width: 768px)').matches;
-      if (!isMobile || typeof screen === 'undefined' || !('orientation' in screen)) {
+      const isTouchLayout = window.matchMedia(MOBILE_TABLET_MEDIA_QUERY).matches;
+      if (!isTouchLayout || typeof screen === 'undefined' || !('orientation' in screen)) {
         return;
       }
 
@@ -134,8 +132,6 @@ function App() {
       navigator.vibrate([120, 80, 180]);
     }
   }, [winner]);
-
-
 
   const toggleFullscreen = async () => {
     if (!boardViewportRef.current) return;
@@ -343,7 +339,7 @@ function App() {
               </button>
               <button type="button" onClick={toggleFullscreen} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-2 text-xs transition hover:bg-white/10 sm:px-4 sm:text-sm">
                 <Expand className="h-4 w-4" />
-                <span className="hidden sm:inline">Full screen</span>
+                <span className="hidden min-[1000px]:inline">Full screen</span>
               </button>
               <button type="button" onClick={openResetConfirm} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-2 text-xs transition hover:bg-white/10 sm:px-4 sm:text-sm">
                 <RotateCcw className="h-4 w-4" />
@@ -366,7 +362,7 @@ function App() {
             <div ref={boardViewportRef} className={`relative min-h-0 rounded-[1.6rem] border border-white/15 bg-white/8 p-2 shadow-glass ${isPerformance && !isFullscreen ? '' : 'backdrop-blur-xl'} sm:rounded-[2.2rem] sm:p-3 ${isFullscreen ? 'h-screen w-screen overflow-hidden rounded-none border-0 bg-[radial-gradient(circle_at_top,#17326f_0%,#08101d_46%,#030712_100%)] p-2 sm:p-3' : ''}`}>
               <div className={`mx-auto h-full overflow-auto ${isFullscreen ? 'w-full max-w-none touch-pan-x touch-pan-y' : 'min-h-[22rem] w-full max-w-[min(98vw,1120px)] sm:min-h-[26rem] xl:max-h-[calc(100vh-11rem)]'}`}>
                 <div className="flex h-full min-w-max items-center justify-center transition-transform duration-200" style={{ transform: `scale(${boardScale})`, transformOrigin: 'center center' }}>
-                  <Board tokens={tokens} playersEnabled={playersEnabledMap} selectableTokenIds={selectableTokenIds} activePlayerColor={currentPlayer?.color} onTokenSelect={handleMoveToken} onStepSound={sounds.playStep} compactMode={!isFullscreen} performanceMode={options.performanceMode} />
+                  <Board tokens={tokens} playersEnabled={playersEnabledMap} selectableTokenIds={selectableTokenIds} showHints={options.showHints} activePlayerColor={currentPlayer?.color} onTokenSelect={handleMoveToken} onStepSound={sounds.playStep} compactMode={!isFullscreen} performanceMode={options.performanceMode} />
                 </div>
               </div>
 
@@ -378,7 +374,7 @@ function App() {
 
               <button type="button" onClick={toggleFullscreen} className="absolute right-3 top-3 z-40 inline-flex items-center gap-2 rounded-full border border-white/45 bg-white/90 px-3 py-2 text-xs font-medium text-slate-900 shadow-[0_10px_24px_rgba(15,23,42,0.2)] transition hover:bg-white sm:right-4 sm:top-4 sm:px-4 sm:text-sm">
                 {isFullscreen ? <Minimize className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
-                <span className="hidden md:inline">{isFullscreen ? 'Exit full screen' : 'Full screen'}</span>
+                <span className="hidden min-[1000px]:inline">{isFullscreen ? 'Exit full screen' : 'Full screen'}</span>
               </button>
 
               {isFullscreen ? (
@@ -483,3 +479,4 @@ const latestDelay = (performanceMode: 'off' | 'basic' | 'ultra', kind: 'human' |
 };
 
 export default App;
+

@@ -145,8 +145,8 @@ export function Dice({
         ? 'rounded-[1.4rem] border border-slate-300 bg-white p-3 text-slate-950 shadow-[0_8px_18px_rgba(15,23,42,0.12)]'
       : 'rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(165deg,rgba(248,250,252,0.97),rgba(226,232,240,0.94)_54%,rgba(203,213,225,0.9)_100%)] p-3 text-slate-950 shadow-[0_16px_30px_rgba(15,23,42,0.22)] backdrop-blur-md'
     : isPerformance
-      ? 'rounded-[2rem] border border-white/10 bg-slate-900/92 p-4 text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] sm:p-5'
-      : 'rounded-[2rem] border border-amber-200/30 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.94))] p-4 text-white shadow-[0_18px_50px_rgba(15,23,42,0.35)] sm:p-5';
+      ? 'rounded-[2rem] border border-white/10 bg-slate-900/92 p-3 text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] min-[1000px]:p-4 xl:p-5'
+      : 'rounded-[2rem] border border-amber-200/30 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.94))] p-3 text-white shadow-[0_18px_50px_rgba(15,23,42,0.35)] min-[1000px]:p-4 xl:p-5';
   const manualShell = fullscreen
     ? isUltra
       ? 'rounded-[1.2rem] border border-slate-300 bg-white p-3 text-slate-950 shadow-none'
@@ -154,8 +154,8 @@ export function Dice({
         ? 'rounded-[1.4rem] border border-slate-300 bg-white p-3 text-slate-950 shadow-[0_8px_18px_rgba(15,23,42,0.12)]'
       : 'rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(165deg,rgba(248,250,252,0.97),rgba(226,232,240,0.94)_54%,rgba(203,213,225,0.9)_100%)] p-3 text-slate-950 shadow-[0_16px_30px_rgba(15,23,42,0.22)] backdrop-blur-md'
     : isPerformance
-      ? 'rounded-[2rem] border border-white/10 bg-slate-900/92 p-4 text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] sm:p-5'
-      : 'rounded-[2rem] border border-amber-200/30 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.94))] p-4 text-white shadow-[0_18px_50px_rgba(15,23,42,0.35)] sm:p-5';
+      ? 'rounded-[2rem] border border-white/10 bg-slate-900/92 p-3 text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] min-[1000px]:p-4 xl:p-5'
+      : 'rounded-[2rem] border border-amber-200/30 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.94))] p-3 text-white shadow-[0_18px_50px_rgba(15,23,42,0.35)] min-[1000px]:p-4 xl:p-5';
   const standardDie = fullscreen
     ? isUltra
       ? mobileViewport
@@ -165,13 +165,13 @@ export function Dice({
         ? 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-300 bg-white p-2.5 shadow-[0_4px_10px_rgba(15,23,42,0.12)] sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3'
       : 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-2.5 shadow-xl sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3'
     : isUltra
-      ? 'relative grid h-20 w-20 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.2rem] border border-slate-300 bg-white p-3 shadow-none sm:h-24 sm:w-24 sm:p-4'
+      ? 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1rem] border border-slate-300 bg-white p-2.5 shadow-none min-[1000px]:h-20 min-[1000px]:w-20 min-[1000px]:rounded-[1.2rem] min-[1000px]:p-3 xl:h-24 xl:w-24 xl:p-4'
       : isPerformance
-        ? 'relative grid h-20 w-20 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.4rem] border border-slate-300 bg-white p-3 shadow-[0_6px_12px_rgba(15,23,42,0.14)] sm:h-24 sm:w-24 sm:p-4'
-      : 'relative grid h-20 w-20 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.4rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-3 shadow-2xl sm:h-24 sm:w-24 sm:p-4';
+        ? 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-300 bg-white p-2.5 shadow-[0_6px_12px_rgba(15,23,42,0.14)] min-[1000px]:h-20 min-[1000px]:w-20 min-[1000px]:rounded-[1.4rem] min-[1000px]:p-3 xl:h-24 xl:w-24 xl:p-4'
+      : 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-2.5 shadow-2xl min-[1000px]:h-20 min-[1000px]:w-20 min-[1000px]:rounded-[1.4rem] min-[1000px]:p-3 xl:h-24 xl:w-24 xl:p-4';
   const pipClass = fullscreen
     ? 'm-auto h-2.5 w-2.5 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] sm:h-3 sm:w-3'
-    : 'm-auto h-3 w-3 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] sm:h-3.5 sm:w-3.5';
+    : 'm-auto h-2.5 w-2.5 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] min-[1000px]:h-3 min-[1000px]:w-3 xl:h-3.5 xl:w-3.5';
 
 
 
@@ -351,3 +351,4 @@ export function Dice({
     </div>
   );
 }
+

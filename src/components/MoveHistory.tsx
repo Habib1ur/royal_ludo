@@ -32,7 +32,7 @@ export function MoveHistory({ entries, performanceMode = 'off' }: MoveHistoryPro
             <div key={entry.id} className={`rounded-2xl border p-3 text-sm ${isUltra ? 'border-white/8 bg-slate-950 shadow-none' : isPerformance ? 'border-white/8 bg-slate-950/72' : 'border-white/10 bg-slate-950/30'}`}>
               <p className="font-medium text-white">{entry.message}</p>
               <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">
-                Turn {entry.turn} • {new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                Turn {entry.turn} | {new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
           ))

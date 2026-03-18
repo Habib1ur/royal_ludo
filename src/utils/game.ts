@@ -101,7 +101,6 @@ export const createInitialState = (): GameState => ({
   selectableTokenIds: [],
   winner: null,
   moveHistory: [],
-  notifications: [],
   showRules: false,
   showResetConfirm: false,
   pendingExtraTurn: false,
@@ -147,3 +146,4 @@ export const createUndoSnapshot = (state: GameState): UndoSnapshot => ({
     blue: { ...state.stats.blue },
   },
 });
+
