@@ -272,7 +272,7 @@ export const useGameStore = create<GameState & GameActions>()(
           ...current,
           tokens: movedTokens,
           diceValue: null,
-          diceRolling: true,
+          diceRolling: false,
           selectableTokenIds: [],
           pendingExtraTurn: false,
           moveHistory: [
@@ -371,7 +371,6 @@ export const useGameStore = create<GameState & GameActions>()(
           }));
         }
 
-        set({ diceRolling: false });
         get().advanceTurn(extraTurn ? 'extra-turn' : undefined);
       },
 

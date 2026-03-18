@@ -23,6 +23,7 @@ function App() {
     players,
     tokens,
     currentTurnIndex,
+    turnCount,
     diceValue,
     diceRolling,
     selectableTokenIds,
@@ -63,7 +64,6 @@ function App() {
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false,
   );
-  const [diceDragOffset, setDiceDragOffset] = useState({ x: 0, y: 0 });
   const [boardScale, setBoardScale] = useState(1);
   const [timerRemaining, setTimerRemaining] = useState<number>(options.turnTimerSeconds);
   const enabledPlayers = players.filter((player) => player.enabled);
@@ -135,24 +135,6 @@ function App() {
     }
   }, [winner]);
 
-  useEffect(() => {
-    if (isUltraPerformance) {
-      setDiceDragOffset({ x: 0, y: 0 });
-      return;
-    }
-
-    setDiceDragOffset({ x: 0, y: 0 });
-  }, [currentPlayer?.color, isFullscreen, isUltraPerformance]);
-
-  useEffect(() => {
-    if (isUltraPerformance || !isFullscreen || phase !== 'playing') {
-      return;
-    }
-
-    if (!diceRolling && diceValue === null) {
-      setDiceDragOffset({ x: 0, y: 0 });
-    }
-  }, [diceRolling, diceValue, isFullscreen, phase, currentTurnIndex, currentPlayer?.color, isUltraPerformance]);
 
 
   const toggleFullscreen = async () => {
@@ -164,24 +146,21 @@ function App() {
     await boardViewportRef.current.requestFullscreen();
   };
 
-  const fullscreenDiceAnchor = (() => {
-    const dieSize = isMobileViewport ? 64 : 80;
-    const half = dieSize / 2;
+  const getFullscreenDieSize = () => {
+    if (isUltraPerformance && isMobileViewport) {
+      return 48;
+    }
 
     if (isUltraPerformance) {
-      switch (currentPlayer?.color) {
-        case 'red':
-          return { left: `calc(20% - ${half}px)`, top: `calc(7.5% - ${half}px)` };
-        case 'green':
-          return { left: `calc(80% - ${half}px)`, top: `calc(7.5% - ${half}px)` };
-        case 'yellow':
-          return { left: `calc(80% - ${half}px)`, top: `calc(92.5% - ${half}px)` };
-        case 'blue':
-          return { left: `calc(20% - ${half}px)`, top: `calc(92.5% - ${half}px)` };
-        default:
-          return { left: `calc(20% - ${half}px)`, top: `calc(7.5% - ${half}px)` };
-      }
+      return 64;
     }
+
+    return isMobileViewport ? 64 : 80;
+  };
+
+  const fullscreenDiceAnchor = (() => {
+    const dieSize = getFullscreenDieSize();
+    const half = dieSize / 2;
 
     switch (currentPlayer?.color) {
       case 'red':
@@ -196,30 +175,6 @@ function App() {
         return { left: `calc(20% - ${half}px)`, top: `calc(20% - ${half}px)` };
     }
   })();
-
-  const clampDiceOffset = (offset: { x: number; y: number }) => {
-    const boardEl = boardViewportRef.current;
-    if (!boardEl || isUltraPerformance) {
-      return isUltraPerformance ? { x: 0, y: 0 } : offset;
-    }
-
-    const rect = boardEl.getBoundingClientRect();
-    const dieSize = isMobileViewport ? 64 : 80;
-    const padding = 16;
-    const anchorPercentX = currentPlayer?.color === 'green' || currentPlayer?.color === 'yellow' ? 0.8 : 0.2;
-    const anchorPercentY = currentPlayer?.color === 'yellow' || currentPlayer?.color === 'blue' ? 0.8 : 0.2;
-    const anchorX = anchorPercentX * rect.width;
-    const anchorY = anchorPercentY * rect.height;
-    const minX = padding + dieSize / 2 - anchorX;
-    const maxX = rect.width - padding - dieSize / 2 - anchorX;
-    const minY = padding + dieSize / 2 - anchorY;
-    const maxY = rect.height - padding - dieSize / 2 - anchorY;
-
-    return {
-      x: Math.max(minX, Math.min(maxX, offset.x)),
-      y: Math.max(minY, Math.min(maxY, offset.y)),
-    };
-  };
 
   const pickAiMove = useMemo(() => {
     return (candidateIds: string[], dieValue: number | null) => {
@@ -433,10 +388,7 @@ function App() {
                     left: fullscreenDiceAnchor.left,
                     top: fullscreenDiceAnchor.top,
                     pointerEvents:
-                      isUltraPerformance &&
-                      isMobileViewport &&
-                      diceValue !== null &&
-                      selectableTokenIds.length > 0
+                      diceValue === 6 && selectableTokenIds.length > 0
                         ? 'none'
                         : 'auto',
                   }}
@@ -449,12 +401,7 @@ function App() {
                     performanceMode={options.performanceMode}
                     fullscreen
                     minimalFullscreen
-                    draggableFullscreen={!isUltraPerformance && currentPlayer?.kind !== 'ai'}
                     mobileViewport={isMobileViewport}
-                    dragOffset={diceDragOffset}
-                    onFullscreenDragMove={(offset: { x: number; y: number }) =>
-                      setDiceDragOffset(clampDiceOffset(offset))
-                    }
                     onRoll={handleRoll}
                     onManualSubmit={useManualDice}
                   />

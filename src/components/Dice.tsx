@@ -9,11 +9,8 @@ type DiceProps = {
   manualMode: boolean;
   fullscreen?: boolean;
   minimalFullscreen?: boolean;
-  draggableFullscreen?: boolean;
   mobileViewport?: boolean;
   performanceMode?: PerformanceMode;
-  dragOffset?: { x: number; y: number };
-  onFullscreenDragMove?: (offset: { x: number; y: number }) => void;
   onRoll: () => void;
   onManualSubmit: (value: number) => void;
 };
@@ -33,32 +30,21 @@ function FullscreenManualDice({
   displayValue,
   rolling,
   disabled,
-  draggableFullscreen,
   mobileViewport,
   performanceMode,
-  dragOffset,
-  onFullscreenDragMove,
   onManualSubmit,
 }: {
   selectedManual: number;
   displayValue: number;
   rolling: boolean;
   disabled: boolean;
-  draggableFullscreen: boolean;
   mobileViewport?: boolean;
   performanceMode?: PerformanceMode;
-  dragOffset: { x: number; y: number };
-  onFullscreenDragMove?: (offset: { x: number; y: number }) => void;
   onManualSubmit: (value: number) => void;
 }) {
   const [manualPickerOpen, setManualPickerOpen] = useState(false);
-  const [liveOffset, setLiveOffset] = useState(dragOffset);
   const isPerformance = performanceMode !== 'off';
   const isUltra = performanceMode === 'ultra';
-
-  useEffect(() => {
-    setLiveOffset(dragOffset);
-  }, [dragOffset.x, dragOffset.y]);
 
   useEffect(() => {
     if (rolling) {
@@ -68,28 +54,7 @@ function FullscreenManualDice({
 
   return (
     <>
-      <motion.div
-        drag={draggableFullscreen && !manualPickerOpen}
-        dragMomentum={false}
-        dragElastic={mobileViewport ? 0.04 : 0.08}
-        onDrag={(_, info) => {
-          if (draggableFullscreen) {
-            onFullscreenDragMove?.({
-              x: dragOffset.x + info.offset.x,
-              y: dragOffset.y + info.offset.y,
-            });
-          }
-        }}
-        onDragEnd={(_, info) => {
-          const nextOffset = {
-            x: dragOffset.x + info.offset.x,
-            y: dragOffset.y + info.offset.y,
-          };
-          onFullscreenDragMove?.(nextOffset);
-        }}
-        style={draggableFullscreen ? { x: liveOffset.x, y: liveOffset.y, touchAction: 'none' } : undefined}
-        className={draggableFullscreen ? 'cursor-grab active:cursor-grabbing touch-none' : ''}
-      >
+      <div>
         <motion.button
           type="button"
           whileTap={{ scale: manualPickerOpen ? 1 : 0.98 }}
@@ -110,7 +75,7 @@ function FullscreenManualDice({
             />
           ))}
         </motion.button>
-      </motion.div>
+      </div>
 
       {manualPickerOpen ? (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
@@ -148,24 +113,13 @@ export function Dice({
   manualMode,
   fullscreen = false,
   minimalFullscreen = false,
-  draggableFullscreen = false,
   mobileViewport = false,
   performanceMode = 'off',
-  dragOffset = { x: 0, y: 0 },
-  onFullscreenDragMove,
   onRoll,
   onManualSubmit,
 }: DiceProps) {
   const [displayValue, setDisplayValue] = useState(value ?? 1);
   const [selectedManual, setSelectedManual] = useState<number>(1);
-  const pointerStateRef = useRef<{
-    startX: number;
-    startY: number;
-    originX: number;
-    originY: number;
-    moved: boolean;
-  } | null>(null);
-
   const isPerformance = performanceMode !== 'off';
   const isUltra = performanceMode === 'ultra';
 
@@ -219,59 +173,7 @@ export function Dice({
     ? 'm-auto h-2.5 w-2.5 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] sm:h-3 sm:w-3'
     : 'm-auto h-3 w-3 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] sm:h-3.5 sm:w-3.5';
 
-  const handleMinimalPointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
-    if (!draggableFullscreen || disabled) {
-      return;
-    }
 
-    pointerStateRef.current = {
-      startX: event.clientX,
-      startY: event.clientY,
-      originX: dragOffset.x,
-      originY: dragOffset.y,
-      moved: false,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-
-  const handleMinimalPointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
-    const pointer = pointerStateRef.current;
-    if (!pointer || !draggableFullscreen || disabled) {
-      return;
-    }
-
-    const dx = event.clientX - pointer.startX;
-    const dy = event.clientY - pointer.startY;
-    if (!pointer.moved && Math.hypot(dx, dy) > 8) {
-      pointer.moved = true;
-    }
-
-    if (pointer.moved) {
-      onFullscreenDragMove?.({ x: pointer.originX + dx, y: pointer.originY + dy });
-    }
-  };
-
-  const handleMinimalPointerUp = (event: React.PointerEvent<HTMLButtonElement>, tapAction: () => void) => {
-    const pointer = pointerStateRef.current;
-    pointerStateRef.current = null;
-
-    if (draggableFullscreen && !disabled) {
-      try {
-        event.currentTarget.releasePointerCapture(event.pointerId);
-      } catch {
-        // Ignore browsers that already released capture.
-      }
-    }
-
-    if (!disabled && (!pointer || !pointer.moved)) {
-      tapAction();
-    }
-  };
-
-  const minimalButtonProps = {
-    onPointerDown: handleMinimalPointerDown,
-    onPointerMove: handleMinimalPointerMove,
-  };
 
   if (fullscreen && minimalFullscreen && manualMode) {
     return (
@@ -280,11 +182,8 @@ export function Dice({
         displayValue={displayValue}
         rolling={rolling}
         disabled={disabled}
-        draggableFullscreen={draggableFullscreen}
         mobileViewport={mobileViewport}
         performanceMode={performanceMode}
-        dragOffset={dragOffset}
-        onFullscreenDragMove={onFullscreenDragMove}
         onManualSubmit={(manualValue) => {
           setSelectedManual(manualValue);
           onManualSubmit(manualValue);
@@ -301,12 +200,10 @@ export function Dice({
         whileTap={{ scale: disabled ? 1 : 0.98 }}
         animate={rolling && !isUltra ? { rotate: [0, 90, 180, 270, 360], scale: [1, 1.08, 0.95, 1.02, 1] } : { rotate: 0, scale: 1 }}
         transition={isUltra ? { duration: 0.05 } : { duration: 0.9, ease: 'easeInOut' }}
-        style={draggableFullscreen ? { x: dragOffset.x, y: dragOffset.y } : undefined}
         disabled={disabled}
-        className={`${standardDie} ${draggableFullscreen ? 'cursor-grab active:cursor-grabbing touch-none' : ''} disabled:cursor-not-allowed disabled:opacity-80`}
+        className={`${standardDie} disabled:cursor-not-allowed disabled:opacity-80`}
         aria-label="Roll dice"
-        {...minimalButtonProps}
-        onPointerUp={(event) => handleMinimalPointerUp(event, onRoll)}
+        onClick={onRoll}
       >
         {pipMap[displayValue].map(([row, col], index) => (
           <span key={`${row}-${col}-${index}`} className={pipClass} style={{ gridRow: row, gridColumn: col }} />
