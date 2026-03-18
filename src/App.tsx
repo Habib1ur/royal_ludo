@@ -423,7 +423,7 @@ function App() {
 
               <button type="button" onClick={toggleFullscreen} className="absolute right-3 top-3 z-40 inline-flex items-center gap-2 rounded-full border border-white/45 bg-white/90 px-3 py-2 text-xs font-medium text-slate-900 shadow-[0_10px_24px_rgba(15,23,42,0.2)] transition hover:bg-white sm:right-4 sm:top-4 sm:px-4 sm:text-sm">
                 {isFullscreen ? <Minimize className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
-                {isMobileViewport && isFullscreen ? null : <span className="hidden sm:inline">{isFullscreen ? 'Exit full screen' : 'Full screen'}</span>}
+                <span className="hidden md:inline">{isFullscreen ? 'Exit full screen' : 'Full screen'}</span>
               </button>
 
               {isFullscreen ? (
