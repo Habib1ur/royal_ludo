@@ -220,7 +220,8 @@ const PawnToken = memo(function PawnToken({
   };
   const isPerformance = performanceMode !== 'off';
   const isUltra = performanceMode === 'ultra';
-  const selectLift = isUltra ? 0 : isPerformance ? (compactMode ? 2 : 3) : compactMode ? 6 : 10;
+  const selectLift = isUltra ? (compactMode ? 1.5 : 2) : isPerformance ? (compactMode ? 2 : 3) : compactMode ? 6 : 10;
+  const animatedSelectable = selectable;
   const controls = useAnimationControls();
   const previousTokenRef = useRef<Token | undefined>(undefined);
   const currentCoordRef = useRef<BoardCoordinate>(targetCoord);
@@ -279,18 +280,18 @@ const PawnToken = memo(function PawnToken({
       <motion.button
         type="button"
         aria-label={`Move ${token.owner} pawn`}
-        className={`pawn-piece ${compactMode ? 'pawn-piece-compact' : ''} ${selectable ? 'pawn-piece-active' : ''} ${isPerformance ? 'pawn-piece-performance' : ''} ${isUltra ? 'pawn-piece-ultra' : ''}`}
+        className={`pawn-piece ${compactMode ? 'pawn-piece-compact' : ''} ${animatedSelectable ? 'pawn-piece-active' : ''} ${isPerformance ? 'pawn-piece-performance' : ''} ${isUltra ? 'pawn-piece-ultra' : ''}`}
         style={pawnStyle}
         initial={false}
         animate={{
           x: offset.x,
-          y: selectable && !isUltra ? [offset.y, offset.y - selectLift, offset.y] : offset.y,
-          scale: selectable && !isUltra ? [1, 1.04, 1] : 1,
+          y: animatedSelectable ? [offset.y, offset.y - selectLift, offset.y] : offset.y,
+          scale: animatedSelectable ? [1, isUltra ? 1.02 : 1.04, 1] : 1,
         }}
         transition={{
           x: { duration: 0.08, ease: 'linear' },
-          y: selectable && !isUltra ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.08, ease: 'linear' },
-          scale: selectable && !isUltra ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.08, ease: 'linear' },
+          y: animatedSelectable ? { duration: isUltra ? 1.0 : 0.9, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.08, ease: 'linear' },
+          scale: animatedSelectable ? { duration: isUltra ? 1.0 : 0.9, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.08, ease: 'linear' },
         }}
         whileHover={isPerformance ? undefined : { scale: selectable ? 1.06 : 1 }}
         whileTap={{ scale: selectable ? 0.96 : 1 }}

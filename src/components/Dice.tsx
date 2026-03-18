@@ -99,7 +99,7 @@ function FullscreenManualDice({
             }
           }}
           aria-disabled={disabled}
-          className={`relative grid shrink-0 grid-cols-3 grid-rows-3 border ${isUltra && mobileViewport ? 'h-14 w-14 rounded-[0.95rem] p-2' : 'h-16 w-16 rounded-[1.1rem] p-2.5 sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3'} ${isUltra ? 'border-slate-300 bg-white shadow-none' : isPerformance ? 'border-slate-300 bg-white shadow-[0_4px_10px_rgba(15,23,42,0.12)]' : 'border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 shadow-xl'} ${disabled ? 'opacity-80' : ''}`}
+          className={`relative grid shrink-0 grid-cols-3 grid-rows-3 border ${isUltra && mobileViewport ? 'h-12 w-12 rounded-[0.85rem] p-1.5' : 'h-16 w-16 rounded-[1.1rem] p-2.5 sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3'} ${isUltra ? 'border-slate-300 bg-white shadow-none' : isPerformance ? 'border-slate-300 bg-white shadow-[0_4px_10px_rgba(15,23,42,0.12)]' : 'border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 shadow-xl'} ${disabled ? 'opacity-80' : ''}`}
           aria-label="Choose manual dice value"
         >
           {pipMap[rolling ? displayValue : selectedManual].map(([row, col], index) => (
@@ -205,7 +205,7 @@ export function Dice({
   const standardDie = fullscreen
     ? isUltra
       ? mobileViewport
-        ? 'relative grid h-14 w-14 shrink-0 grid-cols-3 grid-rows-3 rounded-[0.95rem] border border-slate-300 bg-white p-2 shadow-none'
+        ? 'relative grid h-12 w-12 shrink-0 grid-cols-3 grid-rows-3 rounded-[0.85rem] border border-slate-300 bg-white p-1.5 shadow-none'
         : 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1rem] border border-slate-300 bg-white p-2.5 shadow-none sm:h-20 sm:w-20 sm:p-3'
       : isPerformance
         ? 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-300 bg-white p-2.5 shadow-[0_4px_10px_rgba(15,23,42,0.12)] sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3'
