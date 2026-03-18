@@ -219,6 +219,41 @@ input {
 }
 
 
+
+.performance-ui .shadow-glass {
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14) !important;
+}
+
+.performance-ui .shadow-board {
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16) !important;
+}
+
+.performance-ui .backdrop-blur-xl,
+.performance-ui .backdrop-blur-md,
+.performance-ui .backdrop-blur-sm,
+.performance-ui .backdrop-blur-2xl {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.performance-ui .pawn-piece-performance::before {
+  filter: none;
+  background: rgba(15, 23, 42, 0.1);
+}
+
+.performance-ui .pawn-piece-performance .pawn-cap,
+.performance-ui .pawn-piece-performance .pawn-neck,
+.performance-ui .pawn-piece-performance .pawn-base {
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.38),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(15, 23, 42, 0.08) !important;
+}
+
+.performance-ui .pawn-piece-active {
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.36)) !important;
+}
+
 .mobile-performance .shadow-glass {
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.14) !important;
 }

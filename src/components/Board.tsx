@@ -277,7 +277,7 @@ const PawnToken = memo(function PawnToken({
       <motion.button
         type="button"
         aria-label={`Move ${token.owner} pawn`}
-        className={`pawn-piece ${compactMode ? 'pawn-piece-compact' : ''} ${selectable ? 'pawn-piece-active' : ''}`}
+        className={`pawn-piece ${compactMode ? 'pawn-piece-compact' : ''} ${selectable ? 'pawn-piece-active' : ''} ${lowPerformanceMode ? 'pawn-piece-performance' : ''}`}
         style={pawnStyle}
         initial={false}
         animate={{
@@ -322,8 +322,8 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayer
   }, [compactMode, tokenOffsets, visibleTokens]);
 
   return (
-    <div className={`board-shell h-full w-full overflow-hidden rounded-[2.8rem] border border-white/20 p-3 shadow-board ${compactMode ? 'board-shell-compact' : ''} ${lowPerformanceMode ? 'board-shell-performance' : ''}`}>
-      <div className="board-grid relative aspect-square h-full w-full overflow-hidden rounded-[2.2rem] bg-[#f8fafc]">
+    <div className={`board-shell h-full w-full overflow-hidden rounded-[2.8rem] border border-white/20 p-3 ${lowPerformanceMode ? 'shadow-[0_10px_22px_rgba(15,23,42,0.12)] bg-white' : 'shadow-board'} ${compactMode ? 'board-shell-compact' : ''} ${lowPerformanceMode ? 'board-shell-performance' : ''}`}>
+      <div className={`board-grid relative aspect-square h-full w-full overflow-hidden rounded-[2.2rem] ${lowPerformanceMode ? 'bg-white' : 'bg-[#f8fafc]'}`}>
         {boardCells.map((cell) => {
           const meta = cell.player ? PLAYER_META[cell.player] : null;
           const disabledPlayer = cell.player ? !playersEnabled[cell.player] : false;
@@ -338,7 +338,9 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayer
                   cell.kind === 'yard'
                     ? `${meta?.soft ?? '#fff'}`
                     : cell.kind === 'lane'
-                      ? `linear-gradient(135deg, ${meta?.soft ?? '#fff'}, #ffffff)`
+                      ? lowPerformanceMode
+                        ? `${meta?.soft ?? '#fff'}`
+                        : `linear-gradient(135deg, ${meta?.soft ?? '#fff'}, #ffffff)`
                       : undefined,
                 opacity: disabledPlayer ? 0.42 : 1,
               }}
@@ -370,19 +372,21 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayer
                 top: `${bounds.rowStart * CELL_PERCENT + HOME_PANEL_INSET}%`,
                 width: `${HOME_PANEL_SIZE}%`,
                 height: `${HOME_PANEL_SIZE}%`,
-                background: `linear-gradient(150deg, ${meta.soft}, ${meta.color})`,
+                background: lowPerformanceMode ? `${meta.color}` : `linear-gradient(150deg, ${meta.soft}, ${meta.color})`,
                 borderColor: isActiveYard ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.88)',
-                boxShadow: isActiveYard
-                  ? `inset 0 0 0 1px rgba(255,255,255,0.28), inset 0 16px 28px rgba(255,255,255,0.2), 0 0 0 4px rgba(255,255,255,0.2), 0 0 24px ${meta.tokenShadow}, 0 0 48px ${meta.tokenShadow}`
-                  : `inset 0 0 0 1px rgba(255,255,255,0.18), inset 0 10px 18px rgba(255,255,255,0.12), 0 8px 18px rgba(15,23,42,0.06)`,
+                boxShadow: lowPerformanceMode
+                  ? (isActiveYard ? '0 0 0 2px rgba(255,255,255,0.2)' : 'none')
+                  : isActiveYard
+                    ? `inset 0 0 0 1px rgba(255,255,255,0.28), inset 0 16px 28px rgba(255,255,255,0.2), 0 0 0 4px rgba(255,255,255,0.2), 0 0 24px ${meta.tokenShadow}, 0 0 48px ${meta.tokenShadow}`
+                    : `inset 0 0 0 1px rgba(255,255,255,0.18), inset 0 10px 18px rgba(255,255,255,0.12), 0 8px 18px rgba(15,23,42,0.06)`,
                 opacity: isEnabled ? 1 : 0.45,
-                filter: isActiveYard ? 'brightness(1.1) saturate(1.08)' : 'brightness(0.94)',
+                filter: lowPerformanceMode ? 'none' : isActiveYard ? 'brightness(1.1) saturate(1.08)' : 'brightness(0.94)',
               }}
             >
               {isActiveYard ? (
                 <>
-                  <div className="absolute inset-[1.5%] rounded-[1.3rem] border-2 border-white/65 shadow-[0_0_18px_rgba(255,255,255,0.32)]" />
-                  <div className="absolute left-1/2 top-[4%] z-[2] -translate-x-1/2 rounded-full border border-white/70 bg-white/90 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.28em] text-slate-900 shadow-[0_8px_20px_rgba(15,23,42,0.2)]">
+                  <div className={`absolute inset-[1.5%] rounded-[1.3rem] border-2 ${lowPerformanceMode ? 'border-white/40' : 'border-white/65 shadow-[0_0_18px_rgba(255,255,255,0.32)]'}`} />
+                  <div className={`absolute left-1/2 top-[4%] z-[2] -translate-x-1/2 rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.28em] text-slate-900 ${lowPerformanceMode ? 'border-white/60 bg-white px-2 py-0.5 shadow-none' : 'border-white/70 bg-white/90 shadow-[0_8px_20px_rgba(15,23,42,0.2)]'}`}>
                     Active
                   </div>
                 </>
@@ -392,7 +396,7 @@ export function Board({ tokens, playersEnabled, selectableTokenIds, activePlayer
               <div className="absolute left-[5%] top-1/2 h-[4px] w-[90%] -translate-y-1/2 rounded-full bg-white/55 shadow-[0_0_10px_rgba(255,255,255,0.18)]" />
               <div className="absolute inset-[6%] grid grid-cols-2 grid-rows-2 gap-[6%]">
                 {slots.map((_, index) => (
-                  <div key={`${player}-slot-${index}`} className="relative overflow-hidden rounded-[1rem] border border-white/26 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.06))] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+                  <div key={`${player}-slot-${index}`} className={`relative overflow-hidden rounded-[1rem] border ${lowPerformanceMode ? 'border-white/20 bg-white/10 shadow-none' : 'border-white/26 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.06))] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]'}`}>
                     <div className="absolute inset-[10%] rounded-[0.8rem] bg-black/5" />
                     <div className="absolute inset-[16%] rounded-[0.75rem] border border-white/20 bg-white/10" />
                     <div

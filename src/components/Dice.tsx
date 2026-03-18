@@ -10,6 +10,7 @@ type DiceProps = {
   minimalFullscreen?: boolean;
   draggableFullscreen?: boolean;
   mobileViewport?: boolean;
+  performanceMode?: boolean;
   dragOffset?: { x: number; y: number };
   onFullscreenDragMove?: (offset: { x: number; y: number }) => void;
   onRoll: () => void;
@@ -26,22 +27,6 @@ const pipMap: Record<number, [number, number][]> = {
 };
 
 
-const clampFullscreenOffset = (offset: { x: number; y: number }, mobileViewport?: boolean) => {
-  if (typeof window === 'undefined') {
-    return offset;
-  }
-
-  const dieSize = mobileViewport ? 64 : 80;
-  const padding = 16;
-  const maxX = Math.max(0, window.innerWidth / 2 - dieSize / 2 - padding);
-  const maxY = Math.max(0, window.innerHeight / 2 - dieSize / 2 - padding);
-
-  return {
-    x: Math.max(-maxX, Math.min(maxX, offset.x)),
-    y: Math.max(-maxY, Math.min(maxY, offset.y)),
-  };
-};
-
 function FullscreenManualDice({
   selectedManual,
   displayValue,
@@ -49,6 +34,7 @@ function FullscreenManualDice({
   disabled,
   draggableFullscreen,
   mobileViewport,
+  performanceMode,
   dragOffset,
   onFullscreenDragMove,
   onManualSubmit,
@@ -59,6 +45,7 @@ function FullscreenManualDice({
   disabled: boolean;
   draggableFullscreen: boolean;
   mobileViewport?: boolean;
+  performanceMode?: boolean;
   dragOffset: { x: number; y: number };
   onFullscreenDragMove?: (offset: { x: number; y: number }) => void;
   onManualSubmit: (value: number) => void;
@@ -84,18 +71,17 @@ function FullscreenManualDice({
         dragElastic={mobileViewport ? 0.04 : 0.08}
         onDrag={(_, info) => {
           if (draggableFullscreen) {
-            setLiveOffset(clampFullscreenOffset({
+            onFullscreenDragMove?.({
               x: dragOffset.x + info.offset.x,
               y: dragOffset.y + info.offset.y,
-            }, mobileViewport));
+            });
           }
         }}
         onDragEnd={(_, info) => {
-          const nextOffset = clampFullscreenOffset({
+          const nextOffset = {
             x: dragOffset.x + info.offset.x,
             y: dragOffset.y + info.offset.y,
-          }, mobileViewport);
-          setLiveOffset(nextOffset);
+          };
           onFullscreenDragMove?.(nextOffset);
         }}
         style={draggableFullscreen ? { x: liveOffset.x, y: liveOffset.y, touchAction: 'none' } : undefined}
@@ -110,7 +96,7 @@ function FullscreenManualDice({
             }
           }}
           aria-disabled={disabled}
-          className={`relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-2.5 shadow-xl sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3 ${disabled ? 'opacity-80' : ''}`}
+          className={`relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border p-2.5 sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3 ${performanceMode ? 'border-slate-300 bg-white shadow-[0_4px_10px_rgba(15,23,42,0.12)]' : 'border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 shadow-xl'} ${disabled ? 'opacity-80' : ''}`}
           aria-label="Choose manual dice value"
         >
           {pipMap[rolling ? displayValue : selectedManual].map(([row, col], index) => (
@@ -131,7 +117,7 @@ function FullscreenManualDice({
             className="absolute inset-0 bg-white/10 backdrop-blur-[3px]"
             onClick={() => setManualPickerOpen(false)}
           />
-          <div className="relative z-10 grid w-[min(20rem,calc(100vw-2rem))] grid-cols-3 gap-2 rounded-[1.8rem] border border-white/55 bg-white/75 p-3 shadow-[0_24px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl sm:w-72 sm:gap-3 sm:p-4">
+          <div className={`relative z-10 grid w-[min(20rem,calc(100vw-2rem))] grid-cols-3 gap-2 rounded-[1.8rem] border p-3 sm:w-72 sm:gap-3 sm:p-4 ${performanceMode ? 'border-slate-300 bg-white shadow-[0_10px_20px_rgba(15,23,42,0.12)]' : 'border-white/55 bg-white/75 shadow-[0_24px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl'}`}>
             {[1, 2, 3, 4, 5, 6].map((face) => (
               <button
                 key={face}
@@ -161,6 +147,7 @@ export function Dice({
   minimalFullscreen = false,
   draggableFullscreen = false,
   mobileViewport = false,
+  performanceMode = false,
   dragOffset = { x: 0, y: 0 },
   onFullscreenDragMove,
   onRoll,
@@ -192,14 +179,26 @@ export function Dice({
   }, [rolling, value]);
 
   const standardShell = fullscreen
-    ? 'rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(165deg,rgba(248,250,252,0.97),rgba(226,232,240,0.94)_54%,rgba(203,213,225,0.9)_100%)] p-3 text-slate-950 shadow-[0_16px_30px_rgba(15,23,42,0.22)] backdrop-blur-md'
-    : 'rounded-[2rem] border border-amber-200/30 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.94))] p-4 text-white shadow-[0_18px_50px_rgba(15,23,42,0.35)] sm:p-5';
+    ? performanceMode
+      ? 'rounded-[1.4rem] border border-slate-300 bg-white p-3 text-slate-950 shadow-[0_8px_18px_rgba(15,23,42,0.12)]'
+      : 'rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(165deg,rgba(248,250,252,0.97),rgba(226,232,240,0.94)_54%,rgba(203,213,225,0.9)_100%)] p-3 text-slate-950 shadow-[0_16px_30px_rgba(15,23,42,0.22)] backdrop-blur-md'
+    : performanceMode
+      ? 'rounded-[2rem] border border-white/10 bg-slate-900/92 p-4 text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] sm:p-5'
+      : 'rounded-[2rem] border border-amber-200/30 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.94))] p-4 text-white shadow-[0_18px_50px_rgba(15,23,42,0.35)] sm:p-5';
   const manualShell = fullscreen
-    ? 'rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(165deg,rgba(248,250,252,0.97),rgba(226,232,240,0.94)_54%,rgba(203,213,225,0.9)_100%)] p-3 text-slate-950 shadow-[0_16px_30px_rgba(15,23,42,0.22)] backdrop-blur-md'
-    : 'rounded-[2rem] border border-amber-200/30 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.94))] p-4 text-white shadow-[0_18px_50px_rgba(15,23,42,0.35)] sm:p-5';
+    ? performanceMode
+      ? 'rounded-[1.4rem] border border-slate-300 bg-white p-3 text-slate-950 shadow-[0_8px_18px_rgba(15,23,42,0.12)]'
+      : 'rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(165deg,rgba(248,250,252,0.97),rgba(226,232,240,0.94)_54%,rgba(203,213,225,0.9)_100%)] p-3 text-slate-950 shadow-[0_16px_30px_rgba(15,23,42,0.22)] backdrop-blur-md'
+    : performanceMode
+      ? 'rounded-[2rem] border border-white/10 bg-slate-900/92 p-4 text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] sm:p-5'
+      : 'rounded-[2rem] border border-amber-200/30 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.94))] p-4 text-white shadow-[0_18px_50px_rgba(15,23,42,0.35)] sm:p-5';
   const standardDie = fullscreen
-    ? 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-2.5 shadow-xl sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3'
-    : 'relative grid h-20 w-20 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.4rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-3 shadow-2xl sm:h-24 sm:w-24 sm:p-4';
+    ? performanceMode
+      ? 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-300 bg-white p-2.5 shadow-[0_4px_10px_rgba(15,23,42,0.12)] sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3'
+      : 'relative grid h-16 w-16 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.1rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-2.5 shadow-xl sm:h-20 sm:w-20 sm:rounded-[1.2rem] sm:p-3'
+    : performanceMode
+      ? 'relative grid h-20 w-20 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.4rem] border border-slate-300 bg-white p-3 shadow-[0_6px_12px_rgba(15,23,42,0.14)] sm:h-24 sm:w-24 sm:p-4'
+      : 'relative grid h-20 w-20 shrink-0 grid-cols-3 grid-rows-3 rounded-[1.4rem] border border-slate-900/15 bg-gradient-to-br from-white via-slate-100 to-slate-300 p-3 shadow-2xl sm:h-24 sm:w-24 sm:p-4';
   const pipClass = fullscreen
     ? 'm-auto h-2.5 w-2.5 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] sm:h-3 sm:w-3'
     : 'm-auto h-3 w-3 rounded-full bg-slate-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25)] sm:h-3.5 sm:w-3.5';

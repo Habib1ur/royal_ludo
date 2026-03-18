@@ -147,7 +147,7 @@ function App() {
     if (!diceRolling && diceValue === null) {
       setDiceDragOffset({ x: 0, y: 0 });
     }
-  }, [diceRolling, diceValue, isFullscreen, phase, currentTurnIndex]);
+  }, [diceRolling, diceValue, isFullscreen, phase, currentTurnIndex, currentPlayer?.color]);
 
   const toggleFullscreen = async () => {
     if (!boardViewportRef.current) return;
@@ -332,7 +332,7 @@ function App() {
 
   return (
     <div
-      className={`${options.performanceMode && isMobileViewport ? 'mobile-performance ' : ''}min-h-screen overflow-hidden transition-colors ${
+      className={`${options.performanceMode ? 'performance-ui ' : ''}${options.performanceMode && isMobileViewport ? 'mobile-performance ' : ''}min-h-screen overflow-hidden transition-colors ${
         theme === 'dark'
           ? 'bg-[radial-gradient(circle_at_top,#17326f_0%,#08101d_40%,#030712_100%)] text-white'
           : 'bg-[radial-gradient(circle_at_top,#f8fbff_0%,#dbeafe_38%,#eff6ff_100%)] text-slate-950'
@@ -448,7 +448,7 @@ function App() {
                     theme={theme}
                     onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   />
-                  <StatsPanel stats={stats} players={players} />
+                  <StatsPanel stats={stats} players={players} performanceMode={options.performanceMode} />
                 </div>
                 <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_20rem] sm:gap-3 xl:grid-cols-1">
                   <div className={`rounded-[2rem] border border-white/15 bg-white/10 p-4 shadow-glass ${options.performanceMode ? '' : 'backdrop-blur-xl'}`}>
@@ -456,12 +456,12 @@ function App() {
                       <History className="h-4 w-4" />
                       <p className="font-display text-lg font-semibold">Recent history</p>
                     </div>
-                    <MoveHistory entries={moveHistory.slice(0, 8)} />
+                    <MoveHistory entries={moveHistory.slice(0, options.performanceMode ? 5 : 8)} performanceMode={options.performanceMode} />
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2 xl:hidden xl:gap-3">
                     {PLAYER_ORDER.map((playerColor) => {
                       const player = players.find((item) => item.color === playerColor)!;
-                      return <PlayerPanel key={playerColor} player={player} tokens={tokens.filter((token) => token.owner === playerColor)} isActive={currentPlayer?.color === playerColor && phase === 'playing'} isWinner={winner === playerColor} />;
+                      return <PlayerPanel key={playerColor} player={player} tokens={tokens.filter((token) => token.owner === playerColor)} isActive={currentPlayer?.color === playerColor && phase === 'playing'} isWinner={winner === playerColor} performanceMode={options.performanceMode} />;
                     })}
                   </div>
                 </div>
@@ -473,7 +473,7 @@ function App() {
             <aside className="hidden xl:grid xl:auto-rows-max xl:gap-3">
               {PLAYER_ORDER.map((playerColor) => {
                 const player = players.find((item) => item.color === playerColor)!;
-                return <PlayerPanel key={playerColor} player={player} tokens={tokens.filter((token) => token.owner === playerColor)} isActive={currentPlayer?.color === playerColor && phase === 'playing'} isWinner={winner === playerColor} />;
+                return <PlayerPanel key={playerColor} player={player} tokens={tokens.filter((token) => token.owner === playerColor)} isActive={currentPlayer?.color === playerColor && phase === 'playing'} isWinner={winner === playerColor} performanceMode={options.performanceMode} />;
               })}
             </aside>
           ) : null}
